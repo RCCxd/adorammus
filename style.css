@@ -293,6 +293,7 @@ main { flex: 1 0 auto; }
 
 /* --- Mobile adjustments --- */
 @media (max-width: 640px) {
+  html { overflow-x: hidden; }
   .card-body { padding: 0.75rem; }
   .card-title, .card-price { font-size: 1.125rem; }
   .gender-toggle { display: flex; gap: 0.5rem; }
@@ -303,7 +304,9 @@ main { flex: 1 0 auto; }
 
 /* --- Page specific adjustments --- */
 /* Lock scroll only on index */
-body.page-index { overflow: hidden; }
+body.page-index { overflow: hidden; overflow-x: hidden; }
+/* hide any soft-gradient bleed causing side scroll */
+.page-index .soft-gradient { overflow: hidden; }
 
 /* Index: smaller hero/header buttons on mobile */
 @media (max-width: 640px) {
@@ -311,9 +314,15 @@ body.page-index { overflow: hidden; }
   .page-index .btn-secondary,
   .page-index #btnCart,
   .page-index #btnCartHero {
-    padding: 0.45rem 0.7rem !important;
-    font-size: 0.875rem !important;
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.80rem !important;
   }
+  /* shrink hero to keep footer visible */
+  .page-index .min-h-screen { min-height: auto !important; }
+  .page-index .page-section > .max-w-6xl { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+  .page-index .page-section > .max-w-6xl.grid { gap: 1rem !important; }
+  .page-index .page-section h2 { font-size: 1.5rem !important; }
+  .page-index .hero-img { height: 12rem !important; }
 }
 
 /* Produtos page: compact top bar and buttons on mobile */
