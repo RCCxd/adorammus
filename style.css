@@ -314,15 +314,33 @@ body.page-index { overflow: hidden; overflow-x: hidden; }
   .page-index .btn-secondary,
   .page-index #btnCart,
   .page-index #btnCartHero {
-    padding: 0.35rem 0.6rem !important;
-    font-size: 0.80rem !important;
+    padding: 0.22rem 0.5rem !important;
+    font-size: 0.72rem !important;
   }
   /* shrink hero to keep footer visible */
   .page-index .min-h-screen { min-height: auto !important; }
-  .page-index .page-section > .max-w-6xl { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+  .page-index .page-section > .max-w-6xl { padding-top: 0.5rem !important; padding-bottom: 0 !important; }
   .page-index .page-section > .max-w-6xl.grid { gap: 1rem !important; }
   .page-index .page-section h2 { font-size: 1.5rem !important; }
   .page-index .hero-img { height: 12rem !important; }
+  .page-index .cart-ico { width: 0.9rem; height: 0.9rem; margin-right: 0.35rem; }
+  /* remove bottom border/gap tint on mobile */
+  .page-index .page-section { border-bottom: 0 !important; }
+}
+
+/* Desktop tweaks */
+@media (min-width: 1024px) {
+  /* Larger gender buttons on PC */
+  .icon-btn[data-card-gender],
+  .icon-btn[data-gender-choice] {
+    padding: 0.7rem 1.1rem;
+    font-size: 1.05rem;
+    border-radius: 0.6rem;
+  }
+  /* Ensure footer visible on PC with static index */
+  .page-index .min-h-screen { min-height: 66vh !important; }
+  .page-index .hero-img { height: 18rem !important; }
+  .page-index .page-section > .max-w-6xl { padding-bottom: 0.75rem !important; }
 }
 
 /* Produtos page: compact top bar and buttons on mobile */
