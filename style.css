@@ -293,7 +293,10 @@ main { flex: 1 0 auto; }
 
 /* --- Mobile adjustments --- */
 @media (max-width: 640px) {
-  html { overflow-x: hidden; }
+  :root { --header-h: 56px; --footer-h: 56px; }
+  html { overflow-x: hidden; height: 100dvh; }
+  body { height: 100dvh; }
+  body.page-index { overflow: hidden; }
   .card-body { padding: 0.75rem; }
   .card-title, .card-price { font-size: 1.125rem; }
   .gender-toggle { display: flex; gap: 0.5rem; }
@@ -320,7 +323,7 @@ body.page-index { overflow-x: hidden; overflow-y: auto; }
     font-size: 0.72rem !important;
   }
   /* shrink hero to keep footer visible */
-  .page-index .min-h-screen { min-height: auto !important; }
+  .page-index .min-h-screen { min-height: calc(100dvh - var(--header-h) - var(--footer-h)) !important; }
   .page-index .page-section > .max-w-6xl { padding-top: 0.5rem !important; padding-bottom: 0 !important; }
   .page-index .page-section > .max-w-6xl.grid { gap: 1rem !important; }
   .page-index .page-section h2 { font-size: 1.5rem !important; }
