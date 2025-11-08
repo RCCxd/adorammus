@@ -1,0 +1,83 @@
+?<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>adorammus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://picsum.photos" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="alternate icon" type="image/png" href="favicon.png" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="bg-gray-900 text-gray-100">
+    <header class="site-header sticky top-0 z-10 bg-gray-900/90 backdrop-blur border-b border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <img src="https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/Logo%20Adorammus.png?raw=true" alt="adorammus" class="h-9 w-9 rounded-md border border-gray-800 object-cover" />
+          <h1 class="text-lg sm:text-xl font-semibold">adorammus</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <a class='btn-primary' href='/produtos'>Compre aqui</a>
+          <button id="btnCart" class="btn-secondary"><svg class="cart-ico" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 4h2l2.4 12.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></svg><span data-cart-label>Carrinho</span> (<span data-cart-count>0</span>)</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- SeÃ§Ã£o Sobre NÃ³s / Hero full-screen -->
+      <section class="page-section soft-gradient border-b border-gray-800 bg-gradient-to-b from-gray-900 to-gray-800">
+        <div class="min-h-screen max-w-6xl mx-auto px-4 py-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+          <div class="anim-up">
+            <h2 class="text-3xl sm:text-4xl font-bold mb-4">Sobre nós</h2>
+            <p class="text-gray-300 leading-relaxed text-lg">
+              A Adorammus é uma loja de camisetas católicas criada para unir fé, estilo e evangelização.
+              Cada peça é pensada para expressar, com beleza e simplicidade, o amor a Deus no dia a dia.
+              Nossas estampas trazem símbolos e frases de devoção — vestir a fé também é anunciar o Evangelho.
+            </p>
+            <div class="mt-8 flex items-center gap-3">
+              <a class='btn-primary' href='/produtos'>Compre aqui</a>
+              <button id="btnCartHero" class="btn-secondary"><svg class="cart-ico" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 4h2l2.4 12.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></svg><span data-cart-label>Ver carrinho</span> (<span data-cart-count>0</span>)</button>
+            </div>
+          </div>
+          <div class="anim-fade">
+            <img src="https://picsum.photos/seed/loja/1000/700" alt="Nossa loja" class="w-full h-72 md:h-[28rem] object-cover rounded-lg border border-gray-800 hover-lift" />
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Cart Modal -->
+    <div id="cartBackdrop" class="modal-backdrop hidden"></div>
+    <div id="cartModal" class="modal hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Seu carrinho</h2>
+        <button id="btnCloseCart" class="icon-btn" title="Fechar">&times;</button>
+      </div>
+      <div id="cartItems" class="divide-y"></div>
+      <div class="flex items-center justify-between mt-4">
+        <div class="text-right ml-auto">
+          <div class="text-sm text-gray-600">Total</div>
+          <div id="cartTotal" class="text-xl font-bold">R$ 0,00</div>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 mt-4">
+        <button id="btnClearCart" class="btn-secondary">Esvaziar</button>
+        <button id="btnCheckout" class="btn-primary">Finalizar compra</button>
+      </div>
+    </div>
+
+    <script src="store.js"></script>
+    <script src="script.js"></script>
+      <footer class="footer-band">
+      <div class="max-w-7xl mx-auto px-4 py-8 text-sm flex items-center justify-between">
+        <div class="text-gray-600">&copy; 2025 adorammus</div>
+        <div class="text-gray-600">Feito com carinho</div>
+      </div>
+    </footer>
+  </body>
+</html>
+
+
+
+
