@@ -304,9 +304,11 @@ main { flex: 1 0 auto; }
 
 /* --- Page specific adjustments --- */
 /* Lock scroll only on index */
-body.page-index { overflow: hidden; overflow-x: hidden; }
+body.page-index { overflow-x: hidden; overflow-y: auto; }
 /* hide any soft-gradient bleed causing side scroll */
 .page-index .soft-gradient { overflow: hidden; }
+/* On index, main should not stretch to fill viewport (avoid brown bar) */
+.page-index main { flex: 0 0 auto !important; }
 
 /* Index: smaller hero/header buttons on mobile */
 @media (max-width: 640px) {
@@ -324,12 +326,30 @@ body.page-index { overflow: hidden; overflow-x: hidden; }
   .page-index .page-section h2 { font-size: 1.5rem !important; }
   .page-index .hero-img { height: 12rem !important; }
   .page-index .cart-ico { width: 0.9rem; height: 0.9rem; margin-right: 0.35rem; }
-  /* remove bottom border/gap tint on mobile */
-  .page-index .page-section { border-bottom: 0 !important; }
+  /* keep only a subtle divider at the end */
+  .page-index .page-section { border-bottom: 1px solid var(--color-line) !important; }
 }
+
+/* Simple divider between conteúdo e footer (todas as larguras) */
+.page-index .page-section { border-bottom: 1px solid var(--color-line) !important; }
 
 /* Desktop tweaks */
 @media (min-width: 1024px) {
+  /* Layout de tela cheia (PC) sem espaços vazios */
+  :root { --header-h: 64px; --footer-h: 64px; }
+  .site-header { min-height: var(--header-h); }
+  .footer-band { min-height: var(--footer-h); }
+
+  /* Index: a área do herói ocupa exatamente o espaço visível */
+  .page-index .page-section > .max-w-6xl {
+    min-height: calc(100vh - var(--header-h) - var(--footer-h)) !important;
+    align-items: center;
+  }
+
+  /* Demais páginas com main.page-section: ocupar exatamente a altura visível */
+  main.page-section {
+    min-height: calc(100vh - var(--header-h) - var(--footer-h)) !important;
+  }
   /* Larger gender buttons on PC */
   .icon-btn[data-card-gender],
   .icon-btn[data-gender-choice] {
@@ -337,10 +357,15 @@ body.page-index { overflow: hidden; overflow-x: hidden; }
     font-size: 1.05rem;
     border-radius: 0.6rem;
   }
-  /* Ensure footer visible on PC with static index */
-  .page-index .min-h-screen { min-height: 66vh !important; }
+  /* Aumenta as informações (somente PC) */
+  .page-index .hero-title { font-size: 2.75rem !important; line-height: 1.2 !important; }
+  .page-index .hero-text { font-size: 1.125rem !important; }
+  .page-index .hero-cta .btn-primary,
+  .page-index .hero-cta .btn-secondary { padding: 0.65rem 1rem !important; font-size: 0.95rem !important; }
+  /* Layout equilibrado e divisão simples */
+  .page-index .min-h-screen { min-height: auto !important; }
   .page-index .hero-img { height: 18rem !important; }
-  .page-index .page-section > .max-w-6xl { padding-bottom: 0.75rem !important; }
+  .page-index .page-section > .max-w-6xl { padding-bottom: 0.5rem !important; }
 }
 
 /* Produtos page: compact top bar and buttons on mobile */
