@@ -140,8 +140,8 @@ document.addEventListener('click', (e) => {
 
 if (btnClearCart) btnClearCart.addEventListener('click', () => { Store.clearCart(); updateCartBadge(); renderCart(); });
 if (btnCheckout) btnCheckout.addEventListener('click', () => {
-  if (!Object.keys(Store.getCart()).length) { alert('Seu carrinho estÃ¡ vazio.'); return; }
-  alert('Obrigado! IntegraÃ§Ã£o de checkout pode ser adicionada depois.');
+  if (!Object.keys(Store.getCart()).length) { alert('Seu carrinho está vazio.'); return; }
+  alert('Obrigado! Integração de checkout irá ser adicionada depois.');
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
