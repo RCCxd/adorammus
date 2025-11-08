@@ -1,0 +1,373 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Produtos - adorammus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://picsum.photos" />
+    <link rel="icon" type="image/png" href="https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/Logo%20Adorammus.png?raw=true" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="bg-gray-900 text-gray-100">
+    <header class="site-header sticky top-0 z-10 bg-gray-900/90 backdrop-blur border-b border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <a href="index.html" class="inline-flex items-center">
+            <img src="https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/Logo%20Adorammus.png?raw=true" alt="adorammus" class="h-9 w-9 rounded-md border border-gray-800 object-cover" />
+          </a>
+          <h1 class="text-lg sm:text-xl font-semibold">Produtos</h1>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+          <button id="btnAdmin" class="btn-secondary">Editar Itens</button>
+          <button id="btnExportJSON" class="btn-secondary" title="Exporta a lista atual para JSON">Exportar JSON</button>
+          <button id="btnImportJSON" class="btn-secondary" title="Importa um arquivo JSON">Importar JSON</button>
+          <input id="fileImportJSON" type="file" accept="application/json" class="hidden" />
+          <button id="btnCart" class="btn-secondary"><svg class="cart-ico" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 4h2l2.4 12.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></svg><span data-cart-label>Carrinho</span> (<span data-cart-count>0</span>)</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-section max-w-5xl mx-auto px-4 py-10 elevated">
+      <div class="mb-6 flex items-center gap-2">
+        <span class="label mb-0">Modelo</span>
+        <button class="icon-btn" data-gender-choice="masculino">Masculino</button>
+        <button class="icon-btn" data-gender-choice="feminino">Feminino</button>
+      </div>
+      <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 gap-8 place-items-center"></div>
+      <p id="emptyState" class="hidden text-center text-gray-400 py-16">Nenhum item encontrado.</p>
+    </main>
+
+    <!-- Admin Modal -->
+    <div id="adminBackdrop" class="modal-backdrop hidden"></div>
+    <div id="adminModal" class="modal hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Gerenciar itens</h2>
+        <button id="btnCloseAdmin" class="icon-btn" title="Fechar">&times;</button>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-medium">Lista</h3>
+            <button id="btnAddNew" class="btn-secondary">Adicionar</button>
+          </div>
+          <div class="overflow-auto border border-gray-800 rounded">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-800">
+                <tr>
+                  <th class="px-3 py-2 text-left">Nome</th>
+                  <th class="px-3 py-2 text-left">Tamanhos</th>
+                  <th class="px-3 py-2 text-right">Preço</th>
+                  <th class="px-3 py-2 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="adminTable" class="divide-y divide-gray-800"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <form id="itemForm" class="space-y-3">
+          <input type="hidden" id="fieldId" />
+          <div>
+            <label class="label" for="fieldName">Nome</label>
+            <input id="fieldName" class="input" type="text" placeholder="Nome do produto" required />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="fieldPrice">Preço (R$)</label>
+              <input id="fieldPrice" class="input" type="number" step="0.01" min="0" placeholder="0,00" required />
+            </div>
+            <div>
+              <label class="label" for="fieldSizes">Tamanhos (separados por vírgula)</label>
+              <input id="fieldSizes" class="input" type="text" placeholder="P,M,G" />
+            </div>
+          </div>
+          <div>
+            <label class="label" for="fieldImage">URL da Imagem</label>
+            <input id="fieldImage" class="input" type="url" placeholder="https://..." />
+          </div>
+          <div>
+            <label class="label" for="fieldImageMale">URL da Imagem Masculino</label>
+            <input id="fieldImageMale" class="input" type="url" placeholder="https://..." />
+          </div>
+          <div>
+            <label class="label" for="fieldImageFemale">URL da Imagem Feminino</label>
+            <input id="fieldImageFemale" class="input" type="url" placeholder="https://..." />
+          </div>
+          <div>
+            <label class="label" for="fieldDesc">Descrição</label>
+            <textarea id="fieldDesc" class="input min-h-[96px]" placeholder="Breve descrição"></textarea>
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button id="btnDelete" type="button" class="btn-danger hidden">Excluir</button>
+            <button id="btnSave" type="submit" class="btn-primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartBackdrop" class="modal-backdrop hidden"></div>
+    <div id="cartModal" class="modal hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Seu carrinho</h2>
+        <button id="btnCloseCart" class="icon-btn" title="Fechar">&times;</button>
+      </div>
+      <div id="cartItems" class="divide-y divide-gray-800"></div>
+      <div class="flex items-center justify-between mt-4">
+        <div class="text-right ml-auto">
+          <div class="text-sm text-gray-400">Total</div>
+          <div id="cartTotal" class="text-xl font-bold">R$ 0,00</div>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 mt-4">
+        <button id="btnClearCart" class="btn-secondary">Esvaziar</button>
+        <button id="btnCheckout" class="btn-primary">Finalizar compra</button>
+      </div>
+    </div>
+
+    <script src="store.js"></script>
+    <script>
+      const grid = document.getElementById('productGrid');
+      const emptyState = document.getElementById('emptyState');
+      let gender = Store.getGender();
+
+      function updateGenderControls() {
+        document.querySelectorAll('[data-gender-choice]').forEach(btn => {
+          const g = btn.getAttribute('data-gender-choice');
+          if (g === gender) {
+            btn.classList.add('bg-indigo-600','border-transparent','text-white');
+          } else {
+            btn.classList.remove('bg-indigo-600','border-transparent','text-white');
+          }
+        });
+      }
+
+      function card(p) {
+        const img = Store.getImageByGender(p, gender);
+        const base = p.image || Store.placeholderImg(p.name || 'item');
+        const fallback = Store.placeholderImg(p.name || 'item');
+        return `
+          <article class="card w-full max-w-xl cursor-pointer anim-up hover-lift" data-go="${p.id}">
+            <div class="relative">
+              <img src="${img}" alt="${p.name}"
+                   loading="lazy" decoding="async"
+                   onerror="this.src=this.dataset.fallback;"
+                   data-fallback="${fallback}"
+                   data-img-base="${base}" data-img-gender="${img}"
+                   class="w-full h-64 md:h-80 object-cover" />
+            </div>
+            <div class="card-body space-y-3">
+              <div class="flex items-start justify-between gap-3">
+                <h3 class="card-title text-xl">${p.name}</h3>
+                <span class="card-price text-xl">${Store.fmtBRL(p.price)}</span>
+              </div>
+              ${p.description ? `<p class="card-desc">${p.description}</p>` : ''}
+              <div class="card-actions">
+                <button class="btn-primary" data-go="${p.id}">Ver detalhes</button>
+              </div>
+            </div>
+          </article>`;
+      }
+
+      function render() {
+        const list = Store.getProducts();
+        if (!list.length) {
+          grid.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        }
+        emptyState.classList.add('hidden');
+        grid.innerHTML = list.map(card).join('');
+        updateGenderControls();
+      }
+
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const go = t.closest('[data-go]');
+        if (go) {
+          const id = go.getAttribute('data-go');
+          window.location.href = `produto.html?id=${encodeURIComponent(id)}`;
+        }
+      });
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        await (window.Store?.initFromRemote?.() || Promise.resolve(false));
+        render();
+      });
+      document.addEventListener('mouseover', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const img = t.closest('img[data-img-base]');
+        if (img) { const base = img.getAttribute('data-img-base'); if (base) img.setAttribute('src', base); }
+      });
+      document.addEventListener('mouseout', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const img = t.closest('img[data-img-base]');
+        if (img) { const g = img.getAttribute('data-img-gender'); if (g) img.setAttribute('src', g); }
+      });
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const gbtn = t.closest('[data-gender-choice]');
+        if (gbtn) {
+          gender = gbtn.getAttribute('data-gender-choice') === 'feminino' ? 'feminino' : 'masculino';
+          Store.setGender(gender);
+          render();
+        }
+      });
+
+      // Admin editor
+      const adminBackdrop = document.getElementById('adminBackdrop');
+      const adminModal = document.getElementById('adminModal');
+      const btnAdmin = document.getElementById('btnAdmin');
+      const btnCloseAdmin = document.getElementById('btnCloseAdmin');
+      const adminTable = document.getElementById('adminTable');
+      const btnAddNew = document.getElementById('btnAddNew');
+      const btnExportJSON = document.getElementById('btnExportJSON');
+      const btnImportJSON = document.getElementById('btnImportJSON');
+      const fileImportJSON = document.getElementById('fileImportJSON');
+      const itemForm = document.getElementById('itemForm');
+      const fieldId = document.getElementById('fieldId');
+      const fieldName = document.getElementById('fieldName');
+      const fieldPrice = document.getElementById('fieldPrice');
+      const fieldSizes = document.getElementById('fieldSizes');
+      const fieldImage = document.getElementById('fieldImage');
+      const fieldImageMale = document.getElementById('fieldImageMale');
+      const fieldImageFemale = document.getElementById('fieldImageFemale');
+      const fieldDesc = document.getElementById('fieldDesc');
+      const btnDelete = document.getElementById('btnDelete');
+
+      function openAdmin() {
+        adminBackdrop.classList.remove('hidden');
+        adminModal.classList.remove('hidden');
+        adminModal.classList.add('anim-scale');
+        renderAdminTable();
+        itemForm.reset();
+        btnDelete.classList.add('hidden');
+      }
+      function closeAdmin() {
+        adminBackdrop.classList.add('hidden');
+        adminModal.classList.add('hidden');
+      }
+      function renderAdminTable() {
+        const list = Store.getProducts();
+        adminTable.innerHTML = list.map(p => `
+          <tr>
+            <td class="px-3 py-2">${p.name}</td>
+            <td class="px-3 py-2">${(p.sizes||[]).join(', ')}</td>
+            <td class="px-3 py-2 text-right">${Store.fmtBRL(p.price)}</td>
+            <td class="px-3 py-2 text-right">
+              <button class="btn-secondary" data-edit="${p.id}">Editar</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+      function fillForm(p) {
+        fieldId.value = p?.id || '';
+        fieldName.value = p?.name || '';
+        fieldPrice.value = p?.price != null ? String(p.price) : '';
+        fieldSizes.value = (p?.sizes || []).join(',');
+        fieldImage.value = p?.image || '';
+        if (fieldImageMale) fieldImageMale.value = p?.imageMale || '';
+        if (fieldImageFemale) fieldImageFemale.value = p?.imageFemale || '';
+        fieldDesc.value = p?.description || '';
+      }
+
+      btnAdmin?.addEventListener('click', openAdmin);
+      btnCloseAdmin?.addEventListener('click', closeAdmin);
+      adminBackdrop?.addEventListener('click', closeAdmin);
+      btnAddNew?.addEventListener('click', () => { fillForm(null); btnDelete.classList.add('hidden'); });
+
+      btnExportJSON?.addEventListener('click', () => {
+        try {
+          const data = Store.getProducts();
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'products.json';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(a.href);
+          alert('Arquivo products.json exportado. Coloque-o em data/products.json e faça commit no GitHub.');
+        } catch (e) {
+          alert('Falha ao exportar JSON.');
+        }
+      });
+      btnImportJSON?.addEventListener('click', () => fileImportJSON?.click());
+      fileImportJSON?.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const list = JSON.parse(text);
+          Store.setProducts(list);
+          render();
+          renderAdminTable();
+          alert('Produtos importados. Para compartilhar, exporte e faça commit em data/products.json.');
+        } catch {
+          alert('JSON inválido.');
+        } finally {
+          e.target.value = '';
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const ed = t.closest('[data-edit]');
+        if (ed) {
+          const id = ed.getAttribute('data-edit');
+          const p = Store.getProduct(id);
+          if (p) { fillForm(p); btnDelete.classList.remove('hidden'); }
+        }
+      });
+
+      itemForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const patch = {
+          id: fieldId.value || undefined,
+          name: fieldName.value.trim(),
+          price: Number(fieldPrice.value),
+          sizes: fieldSizes.value,
+          image: fieldImage.value.trim(),
+          imageMale: (fieldImageMale?.value || '').trim(),
+          imageFemale: (fieldImageFemale?.value || '').trim(),
+          description: fieldDesc.value.trim()
+        };
+        if (patch.id) {
+          Store.updateProduct(patch.id, patch);
+        } else {
+          Store.addProduct(patch);
+        }
+        render();
+        renderAdminTable();
+        itemForm.reset();
+        btnDelete.classList.add('hidden');
+      });
+      btnDelete?.addEventListener('click', () => {
+        const id = fieldId.value;
+        if (id && confirm('Excluir este item?')) {
+          Store.removeProduct(id);
+          render();
+          renderAdminTable();
+          itemForm.reset();
+          btnDelete.classList.add('hidden');
+        }
+      });
+    </script>
+    <script src="script.js"></script>
+      <footer class="footer-band">
+      <div class="max-w-7xl mx-auto px-4 py-8 text-sm flex items-center justify-between">
+        <div class="text-gray-600">&copy; 2025 adorammus</div>
+        <div class="text-gray-600">Feito com carinho</div>
+      </div>
+    </footer>
+  </body>
+
+
+
+

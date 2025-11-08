@@ -1,0 +1,161 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Produto - adorammus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://picsum.photos" />
+    <link rel="icon" type="image/png" href="https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/Logo%20Adorammus.png?raw=true" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="bg-gray-900 text-gray-100">
+    <header class="site-header sticky top-0 z-10 bg-gray-900/90 backdrop-blur border-b border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <a href="produtos.html" class="inline-flex items-center">
+            <img src="https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/Logo%20Adorammus.png?raw=true" alt="adorammus" class="h-9 w-9 rounded-md border border-gray-800 object-cover" />
+          </a>
+          <h1 class="text-lg sm:text-xl font-semibold">Detalhe do Produto</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="btnCart" class="btn-secondary"><svg class="cart-ico" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 4h2l2.4 12.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></svg><span data-cart-label>Carrinho</span> (<span data-cart-count>0</span>)</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-section max-w-6xl mx-auto px-4 py-10 elevated">
+      <div id="productDetail" class="grid grid-cols-1 md:grid-cols-2 gap-10 items-start"></div>
+      <p id="notFound" class="hidden text-center text-gray-400 py-16">Produto não encontrado.</p>
+    </main>
+
+    <!-- Cart Modal -->
+    <div id="cartBackdrop" class="modal-backdrop hidden"></div>
+    <div id="cartModal" class="modal hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Seu carrinho</h2>
+        <button id="btnCloseCart" class="icon-btn" title="Fechar">&times;</button>
+      </div>
+      <div id="cartItems" class="divide-y divide-gray-800"></div>
+      <div class="flex items-center justify-between mt-4">
+        <div class="text-right ml-auto">
+          <div class="text-sm text-gray-400">Total</div>
+          <div id="cartTotal" class="text-xl font-bold">R$ 0,00</div>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 mt-4">
+        <button id="btnClearCart" class="btn-secondary">Esvaziar</button>
+        <button id="btnCheckout" class="btn-primary">Finalizar compra</button>
+      </div>
+    </div>
+
+    <script src="store.js"></script>
+    <script>
+      const wrap = document.getElementById('productDetail');
+      const notFound = document.getElementById('notFound');
+      function getId() {
+        const usp = new URLSearchParams(window.location.search);
+        return usp.get('id');
+      }
+      let selSize = null;
+      let selGender = Store.getGender();
+      function render() {
+        const id = getId();
+        const p = Store.getProduct(id);
+        if (!p) {
+          wrap.innerHTML = '';
+          notFound.classList.remove('hidden');
+          return;
+        }
+        const sizes = (p.sizes && p.sizes.length) ? p.sizes : ['P','M','G'];
+        if (!selSize) selSize = sizes[0];
+        const img = Store.getImageByGender(p, selGender);
+        const base = p.image || Store.placeholderImg(p.name || 'item');
+        wrap.innerHTML = `
+          <div class="anim-fade">
+            <img src="${img}" alt="${p.name}"
+                 loading="lazy" decoding="async"
+                 onerror="this.src=this.dataset.fallback;"
+                 data-fallback="${Store.placeholderImg(p.name || 'item')}"
+                 data-img-base="${base}" data-img-gender="${img}"
+                 class="w-full h-80 md:h-[28rem] object-cover rounded-lg border border-gray-800 hover-lift" />
+          </div>
+          <div class="space-y-5 anim-up">
+            <div class="flex items-start justify-between gap-4">
+              <h2 class="text-2xl md:text-3xl font-bold">${p.name}</h2>
+            </div>
+            <div class="text-xl font-semibold">${Store.fmtBRL(p.price)}</div>
+            ${p.description ? `<p class="text-gray-300">${p.description}</p>` : ''}
+            <div>
+              <div class="label">Modelo</div>
+              <div class="flex flex-wrap gap-2">
+                ${['masculino','feminino'].map(g => `
+                  <button class="icon-btn ${selGender===g ? 'bg-indigo-600 border-transparent text-white' : ''}" data-gender-choice="${g}">${g.charAt(0).toUpperCase()+g.slice(1)}</button>
+                `).join('')}
+              </div>
+            </div>
+            <div>
+              <div class="label">Tamanhos</div>
+              <div class="flex flex-wrap gap-2">
+                ${sizes.map(s => `
+                  <button class="icon-btn ${selSize===s ? 'bg-indigo-600 border-transparent text-white' : ''}" data-size-choice="${s}">${s}</button>
+                `).join('')}
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <button class="btn-primary" data-add="${p.id}">Adicionar ao carrinho</button>
+              <a href="produtos.html" class="btn-secondary">Voltar</a>
+            </div>
+          </div>`;
+      }
+      document.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const add = t.closest('[data-add]');
+        const sizeBtn = t.closest('[data-size-choice]');
+        const genderBtn = t.closest('[data-gender-choice]');
+        if (sizeBtn) {
+          selSize = sizeBtn.getAttribute('data-size-choice');
+          render();
+        } else if (genderBtn) {
+          selGender = genderBtn.getAttribute('data-gender-choice') === 'feminino' ? 'feminino' : 'masculino';
+          Store.setGender(selGender);
+          render();
+        } else if (add) {
+          const id = add.getAttribute('data-add');
+          Store.addToCart(id, selSize || null, 1);
+          updateCartBadge && updateCartBadge();
+        }
+      });
+      document.addEventListener('mouseover', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const img = t.closest('img[data-img-base]');
+        if (img) { const base = img.getAttribute('data-img-base'); if (base) img.setAttribute('src', base); }
+      });
+      document.addEventListener('mouseout', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const img = t.closest('img[data-img-base]');
+        if (img) { const g = img.getAttribute('data-img-gender'); if (g) img.setAttribute('src', g); }
+      });
+      document.addEventListener('DOMContentLoaded', async () => {
+        await (window.Store?.initFromRemote?.() || Promise.resolve(false));
+        render();
+      });
+    </script>
+    <script src="script.js"></script>
+      <footer class="footer-band">
+      <div class="max-w-7xl mx-auto px-4 py-8 text-sm flex items-center justify-between">
+        <div class="text-gray-600">&copy; 2025 adorammus</div>
+        <div class="text-gray-600">Feito com carinho</div>
+      </div>
+    </footer>
+  </body>
+</html>
+
+
+
+
+
+

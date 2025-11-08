@@ -1,0 +1,245 @@
+'use strict';
+// Estado e utilitários compartilhados entre páginas (produtos, carrinho, preferências)
+
+const Store = (() => {
+  const STORAGE_PRODUCTS = 'lk_products';
+  const STORAGE_CART = 'lk_cart';
+  const STORAGE_GENDER = 'lk_gender';
+
+  // Util
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const fmtBRL = (n) => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const placeholderImg = (seed) => `https://picsum.photos/seed/${encodeURIComponent(seed || 'item')}/1000/700`;
+
+  function readJSON(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch {
+      return fallback;
+    }
+  }
+  function writeJSON(key, value) {
+    localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function isValidItem(x) {
+    return (
+      x && typeof x === 'object' &&
+      typeof x.name === 'string' && x.name.trim() !== '' &&
+      typeof x.price === 'number' && Number.isFinite(x.price) && x.price >= 0
+    );
+  }
+
+  function normalizeSizes(sizes) {
+    if (!sizes) return ['P','M','G'];
+    if (Array.isArray(sizes)) return sizes.map(String).filter(Boolean);
+    if (typeof sizes === 'string') return sizes.split(',').map(s => s.trim()).filter(Boolean);
+    return ['P','M','G'];
+  }
+
+  function resolveImageUrl(src, seedName) {
+    if (!src) return placeholderImg(seedName || 'item');
+    const s = String(src).trim();
+    if (!s) return placeholderImg(seedName || 'item');
+    if (/^(https?:)?\/\//i.test(s) || s.startsWith('data:')) return s; // absoluto
+    try {
+      return new URL(s, document.baseURI).href; // relativo ao site (ex.: images/x.jpg)
+    } catch {
+      return placeholderImg(seedName || 'item');
+    }
+  }
+
+  function sanitizeProduct(p) {
+    const sizes = normalizeSizes(p.sizes);
+    const name = (p.name || '').trim();
+    const price = Number(p.price);
+    const id = p.id || uid();
+    return {
+      id,
+      name,
+      price,
+      category: p.category || 'Camisetas',
+      image: resolveImageUrl(p.image, name || id),
+      imageMale: resolveImageUrl(p.imageMale || p.image, (name || id) + '-m'),
+      imageFemale: resolveImageUrl(p.imageFemale || p.image, (name || id) + '-f'),
+      description: p.description || '',
+      sizes
+    };
+  }
+
+  const defaultProducts = [
+    sanitizeProduct({
+      id: uid(),
+      name: 'Camiseta Preta',
+      price: 79.9,
+      category: 'Camisetas',
+      image: placeholderImg('camiseta-preta'),
+      imageMale: placeholderImg('camiseta-preta-m'),
+      imageFemale: placeholderImg('camiseta-preta-f'),
+      description: 'Camiseta preta básica 100% algodão. Caimento confortável.'
+    }),
+    sanitizeProduct({
+      id: uid(),
+      name: 'Camiseta Branca',
+      price: 74.9,
+      category: 'Camisetas',
+      image: placeholderImg('camiseta-branca'),
+      imageMale: placeholderImg('camiseta-branca-m'),
+      imageFemale: placeholderImg('camiseta-branca-f'),
+      description: 'Camiseta branca essencial, macia e leve para o dia a dia.'
+    })
+  ];
+
+  // Produtos
+  function ensureProducts() {
+    let items = readJSON(STORAGE_PRODUCTS, null);
+    if (!Array.isArray(items) || !items.length) {
+      writeJSON(STORAGE_PRODUCTS, defaultProducts);
+      items = defaultProducts;
+    }
+    return items.filter(isValidItem);
+  }
+
+  function getProducts() {
+    return ensureProducts().map(p => ({ ...p, sizes: normalizeSizes(p.sizes) }));
+  }
+  function getProduct(id) {
+    const p = ensureProducts().find(p => p.id === id) || null;
+    return p ? { ...p, sizes: normalizeSizes(p.sizes) } : null;
+  }
+  function setProducts(list) {
+    if (!Array.isArray(list)) throw new Error('Lista inválida');
+    const next = list.map(sanitizeProduct);
+    writeJSON(STORAGE_PRODUCTS, next);
+  }
+  function addProduct(prod) {
+    const items = ensureProducts();
+    const item = sanitizeProduct(prod);
+    if (!isValidItem(item)) throw new Error('Item inválido');
+    items.unshift(item);
+    writeJSON(STORAGE_PRODUCTS, items);
+    return item;
+  }
+  function updateProduct(id, patch) {
+    const items = ensureProducts();
+    const idx = items.findIndex(p => p.id === id);
+    if (idx < 0) throw new Error('Item não encontrado');
+    const merged = sanitizeProduct({ ...items[idx], ...patch, id });
+    if (!isValidItem(merged)) throw new Error('Atualização inválida');
+    items[idx] = merged;
+    writeJSON(STORAGE_PRODUCTS, items);
+    return merged;
+  }
+  function removeProduct(id) {
+    const items = ensureProducts().filter(p => p.id !== id);
+    writeJSON(STORAGE_PRODUCTS, items);
+  }
+  function resetProductsToDefaults() { writeJSON(STORAGE_PRODUCTS, defaultProducts); }
+
+  // Carrinho
+  function migrateCart(raw) {
+    if (Array.isArray(raw)) return raw;
+    if (raw && typeof raw === 'object') {
+      const prods = getProducts();
+      return Object.entries(raw).map(([id, qty]) => ({ id, size: (prods.find(p => p.id === id)?.sizes?.[0]) || 'Único', qty }));
+    }
+    return [];
+  }
+  function getCart() { return migrateCart(readJSON(STORAGE_CART, [])); }
+  function saveCart(lines) { writeJSON(STORAGE_CART, lines); }
+  function cartCount() { return getCart().reduce((a, b) => a + (b.qty || 0), 0); }
+  function addToCart(id, size = null, qty = 1) {
+    const lines = getCart();
+    const useSize = size || (getProduct(id)?.sizes?.[0] || 'Único');
+    const idx = lines.findIndex(l => l.id === id && l.size === useSize);
+    if (idx >= 0) lines[idx].qty += qty; else lines.push({ id, size: useSize, qty });
+    saveCart(lines);
+    return lines;
+  }
+  function setCartQty(id, size, qty) {
+    const lines = getCart();
+    const idx = lines.findIndex(l => l.id === id && l.size === size);
+    if (idx < 0) return lines;
+    if (qty <= 0) { lines.splice(idx, 1); } else { lines[idx].qty = qty; }
+    saveCart(lines);
+    return lines;
+  }
+  function removeFromCart(id, size) {
+    const lines = getCart().filter(l => !(l.id === id && l.size === size));
+    saveCart(lines);
+    return lines;
+  }
+  function clearCart() { saveCart([]); }
+  function cartTotal() {
+    const lines = getCart();
+    const prods = ensureProducts();
+    return lines.reduce((sum, l) => {
+      const p = prods.find(x => x.id === l.id);
+      return sum + (p ? p.price * (l.qty || 0) : 0);
+    }, 0);
+  }
+
+  // Preferências de exibição (gênero)
+  function getGender() {
+    const g = localStorage.getItem(STORAGE_GENDER);
+    return (g === 'feminino' || g === 'masculino') ? g : 'masculino';
+  }
+  function setGender(g) {
+    const v = (g === 'feminino') ? 'feminino' : 'masculino';
+    localStorage.setItem(STORAGE_GENDER, v);
+    return v;
+  }
+  function getImageByGender(prod, gender) {
+    const g = (gender === 'feminino') ? 'feminino' : 'masculino';
+    const base = prod && typeof prod === 'object' ? prod : {};
+    const name = base.name || base.id || 'item';
+    if (g === 'feminino') return resolveImageUrl(base.imageFemale || base.image, `${name}-f`);
+    return resolveImageUrl(base.imageMale || base.image, `${name}-m`);
+  }
+
+  // Carrega lista remota (GitHub Pages) e salva localmente
+  async function initFromRemote(customUrl) {
+    const buster = `v=${Math.floor(Date.now()/60000)}`; // muda a cada minuto
+    const candidates = [];
+    if (customUrl) candidates.push(customUrl);
+    candidates.push('data/products.json');
+    candidates.push('products.json');
+    candidates.push('./data/products.json');
+    candidates.push('./products.json');
+
+    for (const u of candidates) {
+      try {
+        const url = u.includes('?') ? `${u}&${buster}` : `${u}?${buster}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) continue;
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.products) ? data.products : null);
+        if (!list) continue;
+        const valid = list.filter(isValidItem);
+        if (valid.length) {
+          setProducts(valid);
+          return true;
+        }
+      } catch { /* tenta próxima */ }
+    }
+    return false;
+  }
+
+  return {
+    // util
+    uid, fmtBRL, placeholderImg,
+    // produtos
+    getProducts, getProduct, setProducts, addProduct, updateProduct, removeProduct, resetProductsToDefaults,
+    // carrinho
+    getCart, cartCount, addToCart, setCartQty, removeFromCart, clearCart, cartTotal,
+    // preferências
+    getGender, setGender, getImageByGender,
+    // remoto
+    initFromRemote,
+  };
+})();
+
+window.Store = Store;
+
