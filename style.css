@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 /* Theme variables */
 :root {
@@ -18,7 +18,7 @@
 
 /* Base */
 body {
-  font-family: 'Cinzel', serif;
+  font-family: 'Poppins', sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text);
   display: flex;
@@ -290,3 +290,13 @@ main { flex: 1 0 auto; }
               radial-gradient(900px 300px at 90% 10%, rgba(233,223,201,0.08), transparent 60%);
 }
 .icon-btn.bg-indigo-600 { color: var(--color-bg) !important; }
+
+/* --- Mobile adjustments --- */
+@media (max-width: 640px) {
+  .card-body { padding: 0.75rem; }
+  .card-title, .card-price { font-size: 1.125rem; }
+  .gender-toggle { display: flex; gap: 0.5rem; }
+  .gender-toggle .icon-btn { flex: 1 1 48%; text-align: center; }
+  #productGrid { gap: 1.25rem !important; }
+  .modal { width: calc(100% - 1rem); margin: 0.5rem auto; padding: 0.75rem; }
+}

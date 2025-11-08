@@ -89,7 +89,7 @@
             <div>
               <div class="label">Modelo</div>
               <div class="flex flex-wrap gap-2">
-                ${['masculino','feminino'].map(g => `
+                ${['feminino','masculino'].map(g => `
                   <button class="icon-btn ${selGender===g ? 'bg-indigo-600 border-transparent text-white' : ''}" data-gender-choice="${g}">${g.charAt(0).toUpperCase()+g.slice(1)}</button>
                 `).join('')}
               </div>
