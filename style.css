@@ -300,3 +300,30 @@ main { flex: 1 0 auto; }
   #productGrid { gap: 1.25rem !important; }
   .modal { width: calc(100% - 1rem); margin: 0.5rem auto; padding: 0.75rem; }
 }
+
+/* --- Page specific adjustments --- */
+/* Lock scroll only on index */
+body.page-index { overflow: hidden; }
+
+/* Index: smaller hero/header buttons on mobile */
+@media (max-width: 640px) {
+  .page-index .btn-primary,
+  .page-index .btn-secondary,
+  .page-index #btnCart,
+  .page-index #btnCartHero {
+    padding: 0.45rem 0.7rem !important;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* Produtos page: compact top bar and buttons on mobile */
+@media (max-width: 640px) {
+  .page-products .site-header .max-w-7xl { padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; }
+  .page-products .site-header h1 { font-size: 0.95rem !important; }
+  .page-products .site-header img { height: 1.5rem !important; width: 1.5rem !important; }
+  .page-products .site-header .btn-secondary,
+  .page-products .site-header .btn-primary {
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.8rem !important;
+  }
+}
