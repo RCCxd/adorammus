@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 // Script comum: badge do carrinho + modal de carrinho.
 
@@ -140,8 +140,39 @@ document.addEventListener('click', (e) => {
 
 if (btnClearCart) btnClearCart.addEventListener('click', () => { Store.clearCart(); updateCartBadge(); renderCart(); });
 if (btnCheckout) btnCheckout.addEventListener('click', () => {
-  if (!Object.keys(Store.getCart()).length) { alert('Seu carrinho está vazio.'); return; }
-  alert('Obrigado! Integração de checkout irá ser adicionada depois.');
+  const cartLines = Store.getCart();
+  if (!cartLines.length) {
+    alert('Seu carrinho está vazio.');
+    return;
+  }
+
+  const products = Store.getProducts();
+  let total = 0;
+
+  const itemsText = cartLines.map((line) => {
+    const product = products.find((p) => p.id === line.id);
+    const name = product ? product.name : 'Produto';
+    const qty = line.qty || 0;
+    const unitPrice = product ? product.price : 0;
+    const lineTotal = unitPrice * qty;
+    total += lineTotal;
+    return `- ${name} (Tamanho: ${line.size}) x${qty} - ${Store.fmtBRL(lineTotal)}`;
+  }).join('\n');
+
+  const messageLines = [
+    'Olá, gostaria de finalizar minha compra na Adorammus.',
+    '',
+    'Resumo do pedido:',
+    itemsText,
+    '',
+    `Total: ${Store.fmtBRL(total)}`
+  ];
+
+  const message = messageLines.join('\n');
+  const phone = '558393023960';
+  const waUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+  window.open(waUrl, '_blank');
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -155,3 +186,4 @@ updateCartBadge();
 // Direct listeners as fallback
 $('btnCart')?.addEventListener('click', (e) => { e.preventDefault(); openCart(); });
 $('btnCartHero')?.addEventListener('click', (e) => { e.preventDefault(); openCart(); });
+

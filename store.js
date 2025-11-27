@@ -1,10 +1,11 @@
 'use strict';
-// Estado e utilitários compartilhados entre páginas (produtos, carrinho, preferências)
+// Estado e utilitarios compartilhados entre paginas (produtos, carrinho, preferencias)
 
 const Store = (() => {
   const STORAGE_PRODUCTS = 'lk_products';
   const STORAGE_CART = 'lk_cart';
   const STORAGE_GENDER = 'lk_gender';
+  const SINGLE_SIZE = 'Unico';
 
   // Util
   const uid = () => Math.random().toString(36).slice(2, 10);
@@ -52,20 +53,29 @@ const Store = (() => {
   }
 
   function sanitizeProduct(p) {
-    const sizes = normalizeSizes(p.sizes);
+    const hasSizes = p.hasSizes === false ? false : true;
+    const sizes = hasSizes ? normalizeSizes(p.sizes) : [SINGLE_SIZE];
     const name = (p.name || '').trim();
     const price = Number(p.price);
     const id = p.id || uid();
+    const showMale = p.showMale !== false;
+    const showFemale = p.showFemale !== false;
+    const baseImage = resolveImageUrl(p.image, name || id);
+    const altImage = resolveImageUrl(p.imageAlt || p.image, (name || id) + '-alt');
     return {
       id,
       name,
       price,
       category: p.category || 'Camisetas',
-      image: resolveImageUrl(p.image, name || id),
-      imageMale: resolveImageUrl(p.imageMale || p.image, (name || id) + '-m'),
-      imageFemale: resolveImageUrl(p.imageFemale || p.image, (name || id) + '-f'),
+      image: baseImage,
+      imageAlt: altImage,
+      imageMale: resolveImageUrl(p.imageMale || baseImage, (name || id) + '-m'),
+      imageFemale: resolveImageUrl(p.imageFemale || baseImage, (name || id) + '-f'),
       description: p.description || '',
-      sizes
+      sizes,
+      hasSizes,
+      showMale,
+      showFemale
     };
   }
 
@@ -78,7 +88,7 @@ const Store = (() => {
       image: placeholderImg('camiseta-preta'),
       imageMale: placeholderImg('camiseta-preta-m'),
       imageFemale: placeholderImg('camiseta-preta-f'),
-      description: 'Camiseta preta básica 100% algodão. Caimento confortável.'
+      description: 'Camiseta preta basica 100% algodao. Caimento confortavel.'
     }),
     sanitizeProduct({
       id: uid(),
@@ -99,25 +109,27 @@ const Store = (() => {
       writeJSON(STORAGE_PRODUCTS, defaultProducts);
       items = defaultProducts;
     }
-    return items.filter(isValidItem);
+    const sanitized = items.filter(isValidItem).map(sanitizeProduct);
+    writeJSON(STORAGE_PRODUCTS, sanitized);
+    return sanitized;
   }
 
   function getProducts() {
-    return ensureProducts().map(p => ({ ...p, sizes: normalizeSizes(p.sizes) }));
+    return ensureProducts().map(p => ({ ...p, sizes: p.hasSizes ? normalizeSizes(p.sizes) : [SINGLE_SIZE] }));
   }
   function getProduct(id) {
     const p = ensureProducts().find(p => p.id === id) || null;
-    return p ? { ...p, sizes: normalizeSizes(p.sizes) } : null;
+    return p ? { ...p, sizes: p.hasSizes ? normalizeSizes(p.sizes) : [SINGLE_SIZE] } : null;
   }
   function setProducts(list) {
-    if (!Array.isArray(list)) throw new Error('Lista inválida');
+    if (!Array.isArray(list)) throw new Error('Lista invalida');
     const next = list.map(sanitizeProduct);
     writeJSON(STORAGE_PRODUCTS, next);
   }
   function addProduct(prod) {
     const items = ensureProducts();
     const item = sanitizeProduct(prod);
-    if (!isValidItem(item)) throw new Error('Item inválido');
+    if (!isValidItem(item)) throw new Error('Item invalido');
     items.unshift(item);
     writeJSON(STORAGE_PRODUCTS, items);
     return item;
@@ -125,9 +137,9 @@ const Store = (() => {
   function updateProduct(id, patch) {
     const items = ensureProducts();
     const idx = items.findIndex(p => p.id === id);
-    if (idx < 0) throw new Error('Item não encontrado');
+    if (idx < 0) throw new Error('Item nao encontrado');
     const merged = sanitizeProduct({ ...items[idx], ...patch, id });
-    if (!isValidItem(merged)) throw new Error('Atualização inválida');
+    if (!isValidItem(merged)) throw new Error('Atualizacao invalida');
     items[idx] = merged;
     writeJSON(STORAGE_PRODUCTS, items);
     return merged;
@@ -138,12 +150,26 @@ const Store = (() => {
   }
   function resetProductsToDefaults() { writeJSON(STORAGE_PRODUCTS, defaultProducts); }
 
+  function pickGender(prod, preferred) {
+    const showMale = prod?.showMale !== false;
+    const showFemale = prod?.showFemale !== false;
+    if (preferred === 'feminino' && showFemale) return 'feminino';
+    if (preferred === 'masculino' && showMale) return 'masculino';
+    if (showMale) return 'masculino';
+    if (showFemale) return 'feminino';
+    return null;
+  }
+
   // Carrinho
   function migrateCart(raw) {
     if (Array.isArray(raw)) return raw;
     if (raw && typeof raw === 'object') {
       const prods = getProducts();
-      return Object.entries(raw).map(([id, qty]) => ({ id, size: (prods.find(p => p.id === id)?.sizes?.[0]) || 'Único', qty }));
+      return Object.entries(raw).map(([id, qty]) => {
+        const p = prods.find(p => p.id === id);
+        const size = p ? (p.sizes?.[0] || SINGLE_SIZE) : SINGLE_SIZE;
+        return { id, size, qty };
+      });
     }
     return [];
   }
@@ -152,7 +178,7 @@ const Store = (() => {
   function cartCount() { return getCart().reduce((a, b) => a + (b.qty || 0), 0); }
   function addToCart(id, size = null, qty = 1) {
     const lines = getCart();
-    const useSize = size || (getProduct(id)?.sizes?.[0] || 'Único');
+    const useSize = size || (getProduct(id)?.sizes?.[0] || SINGLE_SIZE);
     const idx = lines.findIndex(l => l.id === id && l.size === useSize);
     if (idx >= 0) lines[idx].qty += qty; else lines.push({ id, size: useSize, qty });
     saveCart(lines);
@@ -181,7 +207,7 @@ const Store = (() => {
     }, 0);
   }
 
-  // Preferências de exibição (gênero)
+  // Preferencias de exibicao (genero)
   function getGender() {
     const g = localStorage.getItem(STORAGE_GENDER);
     return (g === 'feminino' || g === 'masculino') ? g : 'masculino';
@@ -192,11 +218,20 @@ const Store = (() => {
     return v;
   }
   function getImageByGender(prod, gender) {
-    const g = (gender === 'feminino') ? 'feminino' : 'masculino';
     const base = prod && typeof prod === 'object' ? prod : {};
     const name = base.name || base.id || 'item';
-    if (g === 'feminino') return resolveImageUrl(base.imageFemale || base.image, `${name}-f`);
-    return resolveImageUrl(base.imageMale || base.image, `${name}-m`);
+    const chosen = pickGender(base, gender);
+    if (chosen === 'feminino') return resolveImageUrl(base.imageFemale || base.image, `${name}-f`);
+    if (chosen === 'masculino') return resolveImageUrl(base.imageMale || base.image, `${name}-m`);
+    return resolveImageUrl(base.image, `${name}-base`);
+  }
+  function getBaseImages(prod) {
+    const base = prod && typeof prod === 'object' ? prod : {};
+    const name = base.name || base.id || 'item';
+    const primary = resolveImageUrl(base.image, `${name}-base`);
+    const secondarySource = base.imageAlt || base.image;
+    const secondary = resolveImageUrl(secondarySource, `${name}-base-alt`);
+    return [primary, secondary];
   }
 
   // Carrega lista remota (GitHub Pages) e salva localmente
@@ -222,7 +257,7 @@ const Store = (() => {
           setProducts(valid);
           return true;
         }
-      } catch { /* tenta próxima */ }
+      } catch { /* tenta proxima */ }
     }
     return false;
   }
@@ -234,12 +269,11 @@ const Store = (() => {
     getProducts, getProduct, setProducts, addProduct, updateProduct, removeProduct, resetProductsToDefaults,
     // carrinho
     getCart, cartCount, addToCart, setCartQty, removeFromCart, clearCart, cartTotal,
-    // preferências
-    getGender, setGender, getImageByGender,
+    // preferencias
+    getGender, setGender, getImageByGender, getBaseImages, pickGender,
     // remoto
     initFromRemote,
   };
 })();
 
 window.Store = Store;
-

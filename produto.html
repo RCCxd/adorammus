@@ -49,7 +49,7 @@
       </div>
     </div>
 
-    <script src="store.js"></script>
+        <script src="store.js"></script>
     <script>
       const wrap = document.getElementById('productDetail');
       const notFound = document.getElementById('notFound');
@@ -59,6 +59,32 @@
       }
       let selSize = null;
       let selGender = Store.getGender();
+      const FLIP_INTERVAL = 5000;
+      let flipTimer = null;
+
+      function flipProductImages() {
+        document.querySelectorAll('img[data-img-primary][data-img-secondary]').forEach((img) => {
+          const primary = img.getAttribute('data-img-primary');
+          const secondary = img.getAttribute('data-img-secondary') || primary;
+          if (!primary || !secondary || primary === secondary) return;
+          const current = img.getAttribute('data-img-state') || 'primary';
+          const next = current === 'primary' ? 'secondary' : 'primary';
+          img.setAttribute('src', next === 'primary' ? primary : secondary);
+          img.setAttribute('data-img-state', next);
+        });
+      }
+      function ensureFlipLoop() {
+        if (flipTimer) clearInterval(flipTimer);
+        flipTimer = setInterval(flipProductImages, FLIP_INTERVAL);
+      }
+
+      function genderOptions(p) {
+        return [
+          { key: 'feminino', label: 'Feminino', enabled: p.showFemale !== false },
+          { key: 'masculino', label: 'Masculino', enabled: p.showMale !== false },
+        ].filter(g => g.enabled);
+      }
+
       function render() {
         const id = getId();
         const p = Store.getProduct(id);
@@ -67,17 +93,42 @@
           notFound.classList.remove('hidden');
           return;
         }
-        const sizes = (p.sizes && p.sizes.length) ? p.sizes : ['P','M','G'];
-        if (!selSize) selSize = sizes[0];
-        const img = Store.getImageByGender(p, selGender);
-        const base = p.image || Store.placeholderImg(p.name || 'item');
+        const options = genderOptions(p);
+        const hasGenderOptions = options.length > 0;
+        if (hasGenderOptions) {
+          selGender = Store.pickGender(p, selGender) || options[0]?.key || 'masculino';
+        }
+        const baseImages = Store.getBaseImages(p);
+        const basePrimary = baseImages[0];
+        const baseSecondary = baseImages[1] || basePrimary;
+        const fallbackImg = Store.placeholderImg(p.name || 'item');
+        const primaryImg = hasGenderOptions ? Store.getImageByGender(p, selGender) : basePrimary;
+        const secondaryImg = hasGenderOptions ? basePrimary : baseSecondary;
+        const safePrimary = primaryImg || fallbackImg;
+        const safeSecondary = secondaryImg || safePrimary;
+        const sizes = p.hasSizes === false ? ['Unico'] : ((p.sizes && p.sizes.length) ? p.sizes : ['P','M','G']);
+        if (!selSize || p.hasSizes === false) selSize = sizes[0];
+        const modelBlock = hasGenderOptions ? `
+            <div>
+              <div class="label">Modelo</div>
+              <div class="flex flex-wrap gap-2">
+                ${options.map(g => `
+                  <button class="icon-btn ${selGender===g.key ? 'bg-indigo-600 border-transparent text-white' : ''}" data-gender-choice="${g.key}">${g.label}</button>
+                `).join('')}
+              </div>
+            </div>` : '';
+        const sizesBlock = p.hasSizes === false
+          ? '<div class="text-sm text-gray-400">Tamanho unico</div>'
+          : `<div class="flex flex-wrap gap-2">${sizes.map(s => `
+                  <button class="icon-btn ${selSize===s ? 'bg-indigo-600 border-transparent text-white' : ''}" data-size-choice="${s}">${s}</button>
+                `).join('')}</div>`;
         wrap.innerHTML = `
           <div class="anim-fade">
-            <img src="${img}" alt="${p.name}"
+            <img src="${safePrimary}" alt="${p.name}"
                  loading="lazy" decoding="async"
                  onerror="this.src=this.dataset.fallback;"
                  data-fallback="${Store.placeholderImg(p.name || 'item')}"
-                 data-img-base="${base}" data-img-gender="${img}"
+                 data-img-primary="${safePrimary}" data-img-secondary="${safeSecondary}" data-img-state="primary"
                  class="w-full h-80 md:h-[28rem] object-cover rounded-lg border border-gray-800 hover-lift" />
           </div>
           <div class="space-y-5 anim-up">
@@ -86,27 +137,17 @@
             </div>
             <div class="text-xl font-semibold">${Store.fmtBRL(p.price)}</div>
             ${p.description ? `<p class="text-gray-300">${p.description}</p>` : ''}
-            <div>
-              <div class="label">Modelo</div>
-              <div class="flex flex-wrap gap-2">
-                ${['feminino','masculino'].map(g => `
-                  <button class="icon-btn ${selGender===g ? 'bg-indigo-600 border-transparent text-white' : ''}" data-gender-choice="${g}">${g.charAt(0).toUpperCase()+g.slice(1)}</button>
-                `).join('')}
-              </div>
-            </div>
+            ${modelBlock}
             <div>
               <div class="label">Tamanhos</div>
-              <div class="flex flex-wrap gap-2">
-                ${sizes.map(s => `
-                  <button class="icon-btn ${selSize===s ? 'bg-indigo-600 border-transparent text-white' : ''}" data-size-choice="${s}">${s}</button>
-                `).join('')}
-              </div>
+              ${sizesBlock}
             </div>
             <div class="flex items-center gap-3">
               <button class="btn-primary" data-add="${p.id}">Adicionar ao carrinho</button>
               <a href="produtos.html" class="btn-secondary">Voltar</a>
             </div>
           </div>`;
+        ensureFlipLoop();
       }
       document.addEventListener('click', (e) => {
         const t = e.target;
@@ -130,18 +171,30 @@
       document.addEventListener('mouseover', (e) => {
         const t = e.target;
         if (!(t instanceof Element)) return;
-        const img = t.closest('img[data-img-base]');
-        if (img) { const base = img.getAttribute('data-img-base'); if (base) img.setAttribute('src', base); }
+        const img = t.closest('img[data-img-primary]');
+        if (img) {
+          const secondary = img.getAttribute('data-img-secondary');
+          const primary = img.getAttribute('data-img-primary');
+          if (secondary && secondary !== primary) {
+            img.setAttribute('src', secondary);
+            img.setAttribute('data-img-state', 'secondary');
+          }
+        }
       });
       document.addEventListener('mouseout', (e) => {
         const t = e.target;
         if (!(t instanceof Element)) return;
-        const img = t.closest('img[data-img-base]');
-        if (img) { const g = img.getAttribute('data-img-gender'); if (g) img.setAttribute('src', g); }
+        const img = t.closest('img[data-img-primary]');
+        if (img) {
+          const primary = img.getAttribute('data-img-primary');
+          if (primary) img.setAttribute('src', primary);
+          img.setAttribute('data-img-state', 'primary');
+        }
       });
       document.addEventListener('DOMContentLoaded', async () => {
         await (window.Store?.initFromRemote?.() || Promise.resolve(false));
         render();
+        ensureFlipLoop();
       });
     </script>
     <script src="script.js"></script>

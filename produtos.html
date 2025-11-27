@@ -19,9 +19,9 @@
           <h1 class="text-lg sm:text-xl font-semibold">Produtos</h1>
         </div>
         <div class="flex items-center gap-2 flex-wrap justify-end">
-          <button id="btnAdmin" class="btn-secondary">Editar Itens</button>
-          <button id="btnExportJSON" class="btn-secondary" title="Exporta a lista atual para JSON">Exportar JSON</button>
-          <button id="btnImportJSON" class="btn-secondary" title="Importa um arquivo JSON">Importar JSON</button>
+          <button id="btnAdmin" class="btn-secondary">Área do administrador</button>
+          <button id="btnExportJSON" class="btn-secondary hidden" title="Exporta a lista atual para JSON">Exportar JSON</button>
+          <button id="btnImportJSON" class="btn-secondary hidden" title="Importa um arquivo JSON">Importar JSON</button>
           <input id="fileImportJSON" type="file" accept="application/json" class="hidden" />
           <button id="btnCart" class="btn-secondary"><svg class="cart-ico" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 4h2l2.4 12.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></svg><span data-cart-label>Carrinho</span> (<span data-cart-count>0</span>)</button>
         </div>
@@ -40,7 +40,7 @@
         <h2 class="text-lg font-semibold">Gerenciar itens</h2>
         <button id="btnCloseAdmin" class="icon-btn" title="Fechar">&times;</button>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-medium">Lista</h3>
@@ -51,9 +51,10 @@
               <thead class="bg-gray-800">
                 <tr>
                   <th class="px-3 py-2 text-left">Nome</th>
+                  <th class="px-3 py-2 text-left">Modelos</th>
                   <th class="px-3 py-2 text-left">Tamanhos</th>
-                  <th class="px-3 py-2 text-right">Preço</th>
-                  <th class="px-3 py-2 text-right">Ações</th>
+                  <th class="px-3 py-2 text-right">Preco</th>
+                  <th class="px-3 py-2 text-right">Acoes</th>
                 </tr>
               </thead>
               <tbody id="adminTable" class="divide-y divide-gray-800"></tbody>
@@ -69,11 +70,17 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="label" for="fieldPrice">Preço (R$)</label>
+              <label class="label" for="fieldPrice">Preco (R$)</label>
               <input id="fieldPrice" class="input" type="number" step="0.01" min="0" placeholder="0,00" required />
             </div>
             <div>
-              <label class="label" for="fieldSizes">Tamanhos (separados por vírgula)</label>
+              <div class="flex items-center justify-between gap-2">
+                <label class="label mb-0" for="fieldSizes">Tamanhos (separados por virgula)</label>
+                <label class="inline-flex items-center gap-2 text-xs cursor-pointer">
+                  <input id="fieldHasSizes" type="checkbox" class="accent-indigo-500" checked />
+                  <span>Variar tamanhos</span>
+                </label>
+              </div>
               <input id="fieldSizes" class="input" type="text" placeholder="P,M,G" />
             </div>
           </div>
@@ -82,16 +89,32 @@
             <input id="fieldImage" class="input" type="url" placeholder="https://..." />
           </div>
           <div>
-            <label class="label" for="fieldImageMale">URL da Imagem Masculino</label>
-            <input id="fieldImageMale" class="input" type="url" placeholder="https://..." />
+            <label class="label" for="fieldImageAlt">URL da Imagem Alternativa (normal)</label>
+            <input id="fieldImageAlt" class="input" type="url" placeholder="https://..." />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="label" for="fieldImageMale">URL da Imagem Masculino</label>
+              <input id="fieldImageMale" class="input" type="url" placeholder="https://..." />
+            </div>
+            <div>
+              <label class="label" for="fieldImageFemale">URL da Imagem Feminino</label>
+              <input id="fieldImageFemale" class="input" type="url" placeholder="https://..." />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+              <input id="fieldShowMale" type="checkbox" class="accent-indigo-500" checked />
+              <span>Mostrar modelo masculino</span>
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+              <input id="fieldShowFemale" type="checkbox" class="accent-indigo-500" checked />
+              <span>Mostrar modelo feminino</span>
+            </label>
           </div>
           <div>
-            <label class="label" for="fieldImageFemale">URL da Imagem Feminino</label>
-            <input id="fieldImageFemale" class="input" type="url" placeholder="https://..." />
-          </div>
-          <div>
-            <label class="label" for="fieldDesc">Descrição</label>
-            <textarea id="fieldDesc" class="input min-h-[96px]" placeholder="Breve descrição"></textarea>
+            <label class="label" for="fieldDesc">Descricao</label>
+            <textarea id="fieldDesc" class="input min-h-[96px]" placeholder="Breve descricao"></textarea>
           </div>
           <div class="flex items-center justify-end gap-2">
             <button id="btnDelete" type="button" class="btn-danger hidden">Excluir</button>
@@ -121,24 +144,61 @@
       </div>
     </div>
 
-    <script src="store.js"></script>
+        <script src="store.js"></script>
     <script>
       const grid = document.getElementById('productGrid');
       const emptyState = document.getElementById('emptyState');
       let gender = Store.getGender();
+      let flipTimer = null;
+      const FLIP_INTERVAL = 5000;
+
+      function flipProductImages() {
+        document.querySelectorAll('img[data-img-primary][data-img-secondary]').forEach((img) => {
+          const primary = img.getAttribute('data-img-primary');
+          const secondary = img.getAttribute('data-img-secondary') || primary;
+          if (!primary || !secondary || primary === secondary) return;
+          const current = img.getAttribute('data-img-state') || 'primary';
+          const next = current === 'primary' ? 'secondary' : 'primary';
+          img.setAttribute('src', next === 'primary' ? primary : secondary);
+          img.setAttribute('data-img-state', next);
+        });
+      }
+      function ensureFlipLoop() {
+        if (flipTimer) clearInterval(flipTimer);
+        flipTimer = setInterval(flipProductImages, FLIP_INTERVAL);
+      }
+
+      function genderOptions(p) {
+        return [
+          { key: 'feminino', label: 'Feminino', enabled: p.showFemale !== false },
+          { key: 'masculino', label: 'Masculino', enabled: p.showMale !== false },
+        ].filter(g => g.enabled);
+      }
 
       function card(p) {
-        const img = Store.getImageByGender(p, gender);
-        const base = p.image || Store.placeholderImg(p.name || 'item');
+        const options = genderOptions(p);
+        const hasGenderOptions = options.length > 0;
+        const chosenGender = hasGenderOptions ? (Store.pickGender(p, gender) || options[0]?.key || 'masculino') : null;
+        const baseImages = Store.getBaseImages(p);
+        const basePrimary = baseImages[0];
+        const baseSecondary = baseImages[1] || baseImages[0];
         const fallback = Store.placeholderImg(p.name || 'item');
+        const primaryImg = hasGenderOptions ? Store.getImageByGender(p, chosenGender) : basePrimary;
+        const secondaryImg = hasGenderOptions ? basePrimary : baseSecondary;
+        const safePrimary = primaryImg || fallback;
+        const safeSecondary = secondaryImg || safePrimary;
+        const genderButtons = hasGenderOptions ? `
+              <div class="card-actions gender-toggle flex flex-wrap gap-2">
+                ${options.map(opt => `<button class="icon-btn ${chosenGender===opt.key ? 'bg-indigo-600 border-transparent text-white' : ''}" data-card-gender="${opt.key}" data-id="${p.id}">${opt.label}</button>`).join('')}
+              </div>` : '';
         return `
           <article class="card w-full max-w-xl anim-up hover-lift" data-card="${p.id}">
             <div class="relative">
-              <img src="${img}" alt="${p.name}"
+              <img src="${safePrimary}" alt="${p.name}"
                    loading="lazy" decoding="async"
                    onerror="this.src=this.dataset.fallback;"
                    data-fallback="${fallback}"
-                   data-img-base="${base}" data-img-gender="${img}" data-go="${p.id}"
+                   data-img-primary="${safePrimary}" data-img-secondary="${safeSecondary}" data-img-state="primary" data-go="${p.id}"
                    class="w-full h-64 md:h-80 object-cover cursor-pointer" />
             </div>
             <div class="card-body space-y-3">
@@ -147,10 +207,7 @@
                 <span class="card-price text-xl">${Store.fmtBRL(p.price)}</span>
               </div>
               ${p.description ? `<p class="card-desc">${p.description}</p>` : ''}
-              <div class="card-actions gender-toggle flex flex-wrap gap-2">
-                <button class="icon-btn ${gender === 'feminino' ? 'bg-indigo-600 border-transparent text-white' : ''}" data-card-gender="feminino" data-id="${p.id}">Feminino</button>
-                <button class="icon-btn ${gender !== 'feminino' ? 'bg-indigo-600 border-transparent text-white' : ''}" data-card-gender="masculino" data-id="${p.id}">Masculino</button>
-              </div>
+              ${genderButtons}
             </div>
           </article>`;
       }
@@ -164,6 +221,7 @@
         }
         emptyState.classList.add('hidden');
         grid.innerHTML = list.map(card).join('');
+        ensureFlipLoop();
       }
 
       document.addEventListener('click', (e) => {
@@ -179,18 +237,30 @@
       document.addEventListener('DOMContentLoaded', async () => {
         await (window.Store?.initFromRemote?.() || Promise.resolve(false));
         render();
+        ensureFlipLoop();
       });
       document.addEventListener('mouseover', (e) => {
         const t = e.target;
         if (!(t instanceof Element)) return;
-        const img = t.closest('img[data-img-base]');
-        if (img) { const base = img.getAttribute('data-img-base'); if (base) img.setAttribute('src', base); }
+        const img = t.closest('img[data-img-primary]');
+        if (img) {
+          const secondary = img.getAttribute('data-img-secondary');
+          const primary = img.getAttribute('data-img-primary');
+          if (secondary && secondary !== primary) {
+            img.setAttribute('src', secondary);
+            img.setAttribute('data-img-state', 'secondary');
+          }
+        }
       });
       document.addEventListener('mouseout', (e) => {
         const t = e.target;
         if (!(t instanceof Element)) return;
-        const img = t.closest('img[data-img-base]');
-        if (img) { const g = img.getAttribute('data-img-gender'); if (g) img.setAttribute('src', g); }
+        const img = t.closest('img[data-img-primary]');
+        if (img) {
+          const primary = img.getAttribute('data-img-primary');
+          if (primary) img.setAttribute('src', primary);
+          img.setAttribute('data-img-state', 'primary');
+        }
       });
       document.addEventListener('click', (e) => {
         const t = e.target;
@@ -204,17 +274,22 @@
             gender = sel;
             Store.setGender(gender);
             const p = Store.getProduct(pid);
-            const img = card.querySelector('img[data-img-base]');
+            const img = card.querySelector('img[data-img-primary]');
             if (p && img) {
               const next = Store.getImageByGender(p, sel);
-              img.setAttribute('src', next);
-              img.setAttribute('data-img-gender', next);
+              const baseImages = Store.getBaseImages(p);
+              const basePrimary = baseImages[0];
+              img.setAttribute('src', next || basePrimary);
+              img.setAttribute('data-img-primary', next || basePrimary);
+              img.setAttribute('data-img-secondary', basePrimary || next);
+              img.setAttribute('data-img-state', 'primary');
             }
             card.querySelectorAll('[data-card-gender]').forEach(b => {
               const g = b.getAttribute('data-card-gender');
               if (g === sel) b.classList.add('bg-indigo-600','border-transparent','text-white');
               else b.classList.remove('bg-indigo-600','border-transparent','text-white');
             });
+            ensureFlipLoop();
           }
         }
       });
@@ -234,30 +309,76 @@
       const fieldName = document.getElementById('fieldName');
       const fieldPrice = document.getElementById('fieldPrice');
       const fieldSizes = document.getElementById('fieldSizes');
+      const fieldHasSizes = document.getElementById('fieldHasSizes');
       const fieldImage = document.getElementById('fieldImage');
+      const fieldImageAlt = document.getElementById('fieldImageAlt');
       const fieldImageMale = document.getElementById('fieldImageMale');
       const fieldImageFemale = document.getElementById('fieldImageFemale');
+      const fieldShowMale = document.getElementById('fieldShowMale');
+      const fieldShowFemale = document.getElementById('fieldShowFemale');
       const fieldDesc = document.getElementById('fieldDesc');
       const btnDelete = document.getElementById('btnDelete');
 
+      const ADMIN_STORAGE_KEY = 'adorammus_admin';
+      const ADMIN_PASSWORD = 'SafireIM'; // altere se desejar
+
+      function isAdmin() {
+        return localStorage.getItem(ADMIN_STORAGE_KEY) === '1';
+      }
+      function setAdminFlag(enabled) {
+        localStorage.setItem(ADMIN_STORAGE_KEY, enabled ? '1' : '0');
+      }
+      function applyAdminVisibility() {
+        const show = isAdmin();
+        [btnExportJSON, btnImportJSON].forEach((el) => {
+          if (!el) return;
+          if (show) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        });
+      }
+      function ensureAdmin() {
+        if (isAdmin()) return true;
+        const pwd = prompt(`Area do administrador
+
+Informe a senha:`);
+        if (!pwd) return false;
+        if (pwd !== ADMIN_PASSWORD) {
+          alert('Senha incorreta.');
+          return false;
+        }
+        setAdminFlag(true);
+        applyAdminVisibility();
+        return true;
+      }
+
+      applyAdminVisibility();
+
       function openAdmin() {
+        if (!isAdmin()) return;
         adminBackdrop.classList.remove('hidden');
         adminModal.classList.remove('hidden');
         adminModal.classList.add('anim-scale');
         renderAdminTable();
-        itemForm.reset();
+        fillForm(null);
         btnDelete.classList.add('hidden');
       }
       function closeAdmin() {
         adminBackdrop.classList.add('hidden');
         adminModal.classList.add('hidden');
       }
+      function formatModels(p) {
+        const items = [];
+        if (p.showFemale !== false) items.push('Fem');
+        if (p.showMale !== false) items.push('Masc');
+        return items.length ? items.join(' / ') : 'Base';
+      }
       function renderAdminTable() {
         const list = Store.getProducts();
         adminTable.innerHTML = list.map(p => `
           <tr>
             <td class="px-3 py-2">${p.name}</td>
-            <td class="px-3 py-2">${(p.sizes||[]).join(', ')}</td>
+            <td class="px-3 py-2">${formatModels(p)}</td>
+            <td class="px-3 py-2">${p.hasSizes === false ? 'Unico' : (p.sizes||[]).join(', ')}</td>
             <td class="px-3 py-2 text-right">${Store.fmtBRL(p.price)}</td>
             <td class="px-3 py-2 text-right">
               <button class="btn-secondary" data-edit="${p.id}">Editar</button>
@@ -265,23 +386,44 @@
           </tr>
         `).join('');
       }
+      function toggleSizeField() {
+        const enabled = fieldHasSizes?.checked !== false;
+        if (fieldSizes) {
+          fieldSizes.disabled = !enabled;
+          fieldSizes.classList.toggle('opacity-60', !enabled);
+        }
+      }
       function fillForm(p) {
         fieldId.value = p?.id || '';
         fieldName.value = p?.name || '';
         fieldPrice.value = p?.price != null ? String(p.price) : '';
         fieldSizes.value = (p?.sizes || []).join(',');
+        fieldHasSizes.checked = p?.hasSizes === false ? false : true;
+        toggleSizeField();
         fieldImage.value = p?.image || '';
+        if (fieldImageAlt) fieldImageAlt.value = p?.imageAlt || '';
         if (fieldImageMale) fieldImageMale.value = p?.imageMale || '';
         if (fieldImageFemale) fieldImageFemale.value = p?.imageFemale || '';
+        if (fieldShowMale) fieldShowMale.checked = p?.showMale !== false;
+        if (fieldShowFemale) fieldShowFemale.checked = p?.showFemale !== false;
         fieldDesc.value = p?.description || '';
       }
 
-      btnAdmin?.addEventListener('click', openAdmin);
+      btnAdmin?.addEventListener('click', () => {
+        if (!ensureAdmin()) return;
+        openAdmin();
+      });
       btnCloseAdmin?.addEventListener('click', closeAdmin);
       adminBackdrop?.addEventListener('click', closeAdmin);
-      btnAddNew?.addEventListener('click', () => { fillForm(null); btnDelete.classList.add('hidden'); });
+      btnAddNew?.addEventListener('click', () => {
+        fillForm(null);
+        btnDelete.classList.add('hidden');
+      });
+
+      fieldHasSizes?.addEventListener('change', toggleSizeField);
 
       btnExportJSON?.addEventListener('click', () => {
+        if (!ensureAdmin()) return;
         try {
           const data = Store.getProducts();
           const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -292,13 +434,17 @@
           a.click();
           a.remove();
           URL.revokeObjectURL(a.href);
-          alert('Arquivo products.json exportado. Coloque-o em data/products.json e faça commit no GitHub.');
+          alert('Arquivo products.json exportado. Coloque-o em data/products.json e faca commit no GitHub.');
         } catch (e) {
           alert('Falha ao exportar JSON.');
         }
       });
-      btnImportJSON?.addEventListener('click', () => fileImportJSON?.click());
+      btnImportJSON?.addEventListener('click', () => {
+        if (!ensureAdmin()) return;
+        fileImportJSON?.click();
+      });
       fileImportJSON?.addEventListener('change', async (e) => {
+        if (!isAdmin()) { e.target.value = ''; return; }
         const file = e.target.files?.[0];
         if (!file) return;
         try {
@@ -307,9 +453,9 @@
           Store.setProducts(list);
           render();
           renderAdminTable();
-          alert('Produtos importados. Para compartilhar, exporte e faça commit em data/products.json.');
+          alert('Produtos importados. Para compartilhar, exporte e faca commit em data/products.json.');
         } catch {
-          alert('JSON inválido.');
+          alert('JSON invalido.');
         } finally {
           e.target.value = '';
         }
@@ -328,14 +474,19 @@
 
       itemForm?.addEventListener('submit', (e) => {
         e.preventDefault();
+        const hasSizes = fieldHasSizes?.checked !== false;
         const patch = {
           id: fieldId.value || undefined,
           name: fieldName.value.trim(),
           price: Number(fieldPrice.value),
-          sizes: fieldSizes.value,
+          sizes: hasSizes ? fieldSizes.value : '',
+          hasSizes,
           image: fieldImage.value.trim(),
+          imageAlt: (fieldImageAlt?.value || '').trim(),
           imageMale: (fieldImageMale?.value || '').trim(),
           imageFemale: (fieldImageFemale?.value || '').trim(),
+          showMale: fieldShowMale?.checked !== false,
+          showFemale: fieldShowFemale?.checked !== false,
           description: fieldDesc.value.trim()
         };
         if (patch.id) {
@@ -346,6 +497,10 @@
         render();
         renderAdminTable();
         itemForm.reset();
+        fieldHasSizes.checked = true;
+        toggleSizeField();
+        if (fieldShowMale) fieldShowMale.checked = true;
+        if (fieldShowFemale) fieldShowFemale.checked = true;
         btnDelete.classList.add('hidden');
       });
       btnDelete?.addEventListener('click', () => {
@@ -355,6 +510,10 @@
           render();
           renderAdminTable();
           itemForm.reset();
+          fieldHasSizes.checked = true;
+          toggleSizeField();
+          if (fieldShowMale) fieldShowMale.checked = true;
+          if (fieldShowFemale) fieldShowFemale.checked = true;
           btnDelete.classList.add('hidden');
         }
       });
@@ -367,7 +526,3 @@
       </div>
     </footer>
   </body>
-
-
-
-

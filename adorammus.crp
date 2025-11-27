@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<Preset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ID>1436755570437652581</ID>
+  <Type>0</Type>
+  <Details>adorammus.netlify.app</Details>
+  <State>WIP</State>
+  <PartySize>0</PartySize>
+  <PartyMax>0</PartyMax>
+  <Timestamps>2</Timestamps>
+  <CustomTimestamp>2025-11-04T20:53:47</CustomTimestamp>
+  <LargeKey>https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/Logo%20Adorammus.png?raw=true</LargeKey>
+  <LargeText />
+  <SmallKey />
+  <SmallText />
+  <Button1Text>Site:</Button1Text>
+  <Button1URL>https://adorammus.netlify.app/</Button1URL>
+  <Button2Text />
+  <Button2URL />
+</Preset>
