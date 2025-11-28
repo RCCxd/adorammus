@@ -33,6 +33,15 @@
       <p id="emptyState" class="hidden text-center text-gray-400 py-16">Nenhum item encontrado.</p>
     </main>
 
+    <!-- Hidden Netlify form so the platform recognizes the visit log submissions -->
+    <form name="visit-log" data-netlify="true" netlify-honeypot="bot-field" hidden aria-hidden="true">
+      <input type="hidden" name="form-name" value="visit-log" />
+      <input type="text" name="page" />
+      <input type="text" name="referrer" />
+      <input type="text" name="userAgent" />
+      <input type="text" name="ip" />
+    </form>
+
     <!-- Admin Modal -->
     <div id="adminBackdrop" class="modal-backdrop hidden"></div>
     <div id="adminModal" class="modal hidden">
@@ -517,6 +526,72 @@ Informe a senha:`);
           btnDelete.classList.add('hidden');
         }
       });
+    </script>
+    <script>
+      (function setupVisitLogging() {
+        const FORM_NAME = 'visit-log';
+        const STORAGE_KEY = `visit-log:${window.location.pathname}`;
+        if (sessionStorage.getItem(STORAGE_KEY)) return;
+
+        const encode = (data) => Object.keys(data)
+          .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(data[key] ?? '')}`)
+          .join('&');
+
+        async function enrichWithIp(details) {
+          try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            if (res.ok) {
+              const data = await res.json();
+              if (data?.ip) details.ip = data.ip;
+            }
+          } catch (err) {
+            console.warn('Falha ao buscar o IP publico', err);
+          }
+          return details;
+        }
+
+        async function collectDetails() {
+          const payload = {
+            'form-name': FORM_NAME,
+            page: `${location.pathname}${location.search}`,
+            fullUrl: location.href,
+            referrer: document.referrer || 'acesso direto',
+            timestamp: new Date().toISOString(),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+            language: navigator.language || '',
+            languages: (navigator.languages || []).join(','),
+            userAgent: navigator.userAgent || '',
+            platform: navigator.platform || '',
+            screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
+            viewport: `${window.innerWidth}x${window.innerHeight}`,
+            cookies: navigator.cookieEnabled ? 'habilitado' : 'desabilitado',
+            online: navigator.onLine ? 'online' : 'offline',
+            botField: '',
+            sessionId: (crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`)
+          };
+          return enrichWithIp(payload);
+        }
+
+        async function submitLog() {
+          const payload = await collectDetails();
+          try {
+            await fetch('/', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: encode(payload)
+            });
+            sessionStorage.setItem(STORAGE_KEY, '1');
+          } catch (err) {
+            console.warn('Falha ao registrar o log de visita', err);
+          }
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', submitLog, { once: true });
+        } else {
+          submitLog();
+        }
+      })();
     </script>
     <script src="script.js"></script>
       <footer class="footer-band">
