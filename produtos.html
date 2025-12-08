@@ -28,8 +28,8 @@
       </div>
     </header>
 
-    <main class="page-section max-w-5xl mx-auto px-4 py-10 elevated">
-      <div id="productGrid" class="grid grid-cols-1 md:grid-cols-2 gap-8 place-items-center"></div>
+    <main class="page-section max-w-[1500px] mx-auto px-3 sm:px-4 py-8 sm:py-10 elevated">
+      <div id="productGrid" class="product-grid"></div>
       <p id="emptyState" class="hidden text-center text-gray-400 py-16">Nenhum item encontrado.</p>
     </main>
 
@@ -61,7 +61,9 @@
                 <tr>
                   <th class="px-3 py-2 text-left">Nome</th>
                   <th class="px-3 py-2 text-left">Modelos</th>
+                  <th class="px-3 py-2 text-left">Cores</th>
                   <th class="px-3 py-2 text-left">Tamanhos</th>
+                  <th class="px-3 py-2 text-left">Estoque</th>
                   <th class="px-3 py-2 text-right">Preco</th>
                   <th class="px-3 py-2 text-right">Acoes</th>
                 </tr>
@@ -94,6 +96,21 @@
             </div>
           </div>
           <div>
+            <div class="flex items-center justify-between gap-3 mb-2">
+              <label class="label mb-0" for="fieldColors">Cores disponiveis</label>
+              <button type="button" id="btnAddColor" class="btn-secondary text-xs px-2 py-1">Adicionar cor</button>
+            </div>
+            <div id="colorList" class="space-y-2">
+              <div class="flex items-center gap-2" data-color-row>
+                <input type="text" class="input flex-1" placeholder="Nome" data-color-name />
+                <input type="text" class="input w-28" placeholder="#hex" data-color-swatch />
+                <button type="button" class="btn-danger text-sm px-3" data-remove-color>&times;</button>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Informe nome e opcionalmente o hex (ex.: Preto / #000000). Deixe vazio para remover.</p>
+            <input id="fieldColors" type="hidden" />
+          </div>
+          <div>
             <label class="label" for="fieldImage">URL da Imagem</label>
             <input id="fieldImage" class="input" type="url" placeholder="https://..." />
           </div>
@@ -119,6 +136,10 @@
             <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
               <input id="fieldShowFemale" type="checkbox" class="accent-indigo-500" checked />
               <span>Mostrar modelo feminino</span>
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm cursor-pointer sm:col-span-2">
+              <input id="fieldInStock" type="checkbox" class="accent-indigo-500" checked />
+              <span>Disponivel (desmarque para marcar como fora de estoque)</span>
             </label>
           </div>
           <div>
@@ -160,6 +181,12 @@
       let gender = Store.getGender();
       let flipTimer = null;
       const FLIP_INTERVAL = 5000;
+      const htmlEscape = (str = '') => String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      const safeColorValue = (val) => String(val ?? '').replace(/["<>]/g, '').replace(/;/g, '');
 
       function flipProductImages() {
         document.querySelectorAll('img[data-img-primary][data-img-secondary]').forEach((img) => {
@@ -183,6 +210,63 @@
           { key: 'masculino', label: 'Masculino', enabled: p.showMale !== false },
         ].filter(g => g.enabled);
       }
+      function colorSwatches(p) {
+        const list = Array.isArray(p.colors) ? p.colors : [];
+        if (!list.length) return '';
+        const visible = list.slice(0, 6);
+        const dots = visible.map(col => {
+          const safeName = htmlEscape(col?.name || 'Cor');
+          const swatch = safeColorValue(col?.swatch || '');
+          const style = swatch ? ` style="--dot-color:${swatch}"` : '';
+          return `<span class="color-dot"${style} title="${safeName}"></span>`;
+        }).join('');
+        const extra = list.length > visible.length
+          ? `<span class="color-dot color-dot-more" title="${htmlEscape((list.length - visible.length) + ' cores extras')}">+${list.length - visible.length}</span>`
+          : '';
+        return `<div class="color-dot-list" aria-label="Cores disponiveis">${dots}${extra}</div>`;
+      }
+      function colorsToInputValue(list) {
+        if (!Array.isArray(list)) return '';
+        return list.map(col => {
+          if (!col) return '';
+          const name = col.name || '';
+          const swatch = col.swatch || '';
+          return swatch ? `${name}:${swatch}` : name;
+        }).filter(Boolean).join(',');
+      }
+      function getColorRows() {
+        if (!colorList) return [];
+        return Array.from(colorList.querySelectorAll('[data-color-row]')).map((row) => {
+          const name = row.querySelector('[data-color-name]')?.value.trim() || '';
+          const swatch = row.querySelector('[data-color-swatch]')?.value.trim() || '';
+          if (!name && !swatch) return null;
+          return { name: name || swatch || 'Variante', swatch: swatch || null };
+        }).filter(Boolean);
+      }
+      function syncColorField() {
+        if (fieldColors) fieldColors.value = colorsToInputValue(getColorRows());
+      }
+      function addColorRow(data = {}) {
+        if (!colorList) return;
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2';
+        row.setAttribute('data-color-row', '1');
+        row.innerHTML = `
+          <input type="text" class="input flex-1" placeholder="Nome" value="${data.name || ''}" data-color-name />
+          <input type="text" class="input w-28" placeholder="#hex" value="${data.swatch || ''}" data-color-swatch />
+          <button type="button" class="btn-danger text-sm px-3" data-remove-color>&times;</button>
+        `;
+        colorList.appendChild(row);
+        syncColorField();
+      }
+      function renderColorRows(list) {
+        if (!colorList) return;
+        colorList.innerHTML = '';
+        const hasList = Array.isArray(list) && list.length;
+        if (hasList) list.forEach(item => addColorRow(item));
+        else addColorRow();
+        syncColorField();
+      }
 
       function card(p) {
         const options = genderOptions(p);
@@ -200,22 +284,31 @@
               <div class="card-actions gender-toggle flex flex-wrap gap-2">
                 ${options.map(opt => `<button class="icon-btn ${chosenGender===opt.key ? 'bg-indigo-600 border-transparent text-white' : ''}" data-card-gender="${opt.key}" data-id="${p.id}">${opt.label}</button>`).join('')}
               </div>` : '';
+        const colorDots = colorSwatches(p);
+        const outOfStock = p.inStock === false;
+        const priceBlock = `
+          <div class="text-right">
+            <span class="card-price text-xl ${outOfStock ? 'opacity-70 line-through' : ''}">${Store.fmtBRL(p.price)}</span>
+            ${outOfStock ? '<div class="card-stock-label">Fora de estoque</div>' : ''}
+          </div>`;
         return `
-          <article class="card w-full max-w-xl anim-up hover-lift" data-card="${p.id}">
+          <article class="card product-card ${outOfStock ? 'card-out' : ''} anim-up hover-lift" data-card="${p.id}">
             <div class="relative">
+              ${''}
               <img src="${safePrimary}" alt="${p.name}"
                    loading="lazy" decoding="async"
                    onerror="this.src=this.dataset.fallback;"
                    data-fallback="${fallback}"
                    data-img-primary="${safePrimary}" data-img-secondary="${safeSecondary}" data-img-state="primary" data-go="${p.id}"
-                   class="w-full h-64 md:h-80 object-cover cursor-pointer" />
+                   class="product-card-media object-cover cursor-pointer" />
             </div>
             <div class="card-body space-y-3">
               <div class="flex items-start justify-between gap-3">
-                <h3 class="card-title text-xl">${p.name}</h3>
-                <span class="card-price text-xl">${Store.fmtBRL(p.price)}</span>
+                <h3 class="card-title text-lg font-semibold">${p.name}</h3>
+                ${priceBlock}
               </div>
               ${p.description ? `<p class="card-desc">${p.description}</p>` : ''}
+              ${colorDots}
               ${genderButtons}
             </div>
           </article>`;
@@ -318,6 +411,9 @@
       const fieldName = document.getElementById('fieldName');
       const fieldPrice = document.getElementById('fieldPrice');
       const fieldSizes = document.getElementById('fieldSizes');
+      const fieldColors = document.getElementById('fieldColors');
+      const colorList = document.getElementById('colorList');
+      const btnAddColor = document.getElementById('btnAddColor');
       const fieldHasSizes = document.getElementById('fieldHasSizes');
       const fieldImage = document.getElementById('fieldImage');
       const fieldImageAlt = document.getElementById('fieldImageAlt');
@@ -325,6 +421,7 @@
       const fieldImageFemale = document.getElementById('fieldImageFemale');
       const fieldShowMale = document.getElementById('fieldShowMale');
       const fieldShowFemale = document.getElementById('fieldShowFemale');
+      const fieldInStock = document.getElementById('fieldInStock');
       const fieldDesc = document.getElementById('fieldDesc');
       const btnDelete = document.getElementById('btnDelete');
 
@@ -361,6 +458,7 @@ Informe a senha:`);
       }
 
       applyAdminVisibility();
+      renderColorRows([]);
 
       function openAdmin() {
         if (!isAdmin()) return;
@@ -381,13 +479,23 @@ Informe a senha:`);
         if (p.showMale !== false) items.push('Masc');
         return items.length ? items.join(' / ') : 'Base';
       }
+      function formatColors(p) {
+        const list = Array.isArray(p.colors) ? p.colors : [];
+        if (!list.length) return '-';
+        return list.map(c => c?.name || '').filter(Boolean).join(', ') || '-';
+      }
+      function formatStock(p) {
+        return p.inStock === false ? 'Sem estoque' : 'Disponivel';
+      }
       function renderAdminTable() {
         const list = Store.getProducts();
         adminTable.innerHTML = list.map(p => `
           <tr>
             <td class="px-3 py-2">${p.name}</td>
             <td class="px-3 py-2">${formatModels(p)}</td>
+            <td class="px-3 py-2">${formatColors(p)}</td>
             <td class="px-3 py-2">${p.hasSizes === false ? 'Unico' : (p.sizes||[]).join(', ')}</td>
+            <td class="px-3 py-2">${formatStock(p)}</td>
             <td class="px-3 py-2 text-right">${Store.fmtBRL(p.price)}</td>
             <td class="px-3 py-2 text-right">
               <button class="btn-secondary" data-edit="${p.id}">Editar</button>
@@ -409,12 +517,14 @@ Informe a senha:`);
         fieldSizes.value = (p?.sizes || []).join(',');
         fieldHasSizes.checked = p?.hasSizes === false ? false : true;
         toggleSizeField();
+        renderColorRows(p?.colors || []);
         fieldImage.value = p?.image || '';
         if (fieldImageAlt) fieldImageAlt.value = p?.imageAlt || '';
         if (fieldImageMale) fieldImageMale.value = p?.imageMale || '';
         if (fieldImageFemale) fieldImageFemale.value = p?.imageFemale || '';
         if (fieldShowMale) fieldShowMale.checked = p?.showMale !== false;
         if (fieldShowFemale) fieldShowFemale.checked = p?.showFemale !== false;
+        if (fieldInStock) fieldInStock.checked = p?.inStock === false ? false : true;
         fieldDesc.value = p?.description || '';
       }
 
@@ -428,6 +538,21 @@ Informe a senha:`);
         fillForm(null);
         btnDelete.classList.add('hidden');
       });
+      btnAddColor?.addEventListener('click', () => {
+        addColorRow();
+      });
+      colorList?.addEventListener('click', (e) => {
+        const t = e.target;
+        if (!(t instanceof Element)) return;
+        const rem = t.closest('[data-remove-color]');
+        if (rem) {
+          const row = rem.closest('[data-color-row]');
+          row?.remove();
+          if (!colorList.querySelector('[data-color-row]')) addColorRow();
+          syncColorField();
+        }
+      });
+      colorList?.addEventListener('input', () => syncColorField());
 
       fieldHasSizes?.addEventListener('change', toggleSizeField);
 
@@ -484,20 +609,24 @@ Informe a senha:`);
       itemForm?.addEventListener('submit', (e) => {
         e.preventDefault();
         const hasSizes = fieldHasSizes?.checked !== false;
+        const colorEntries = getColorRows();
         const patch = {
           id: fieldId.value || undefined,
           name: fieldName.value.trim(),
           price: Number(fieldPrice.value),
           sizes: hasSizes ? fieldSizes.value : '',
           hasSizes,
+          colors: colorEntries,
           image: fieldImage.value.trim(),
           imageAlt: (fieldImageAlt?.value || '').trim(),
           imageMale: (fieldImageMale?.value || '').trim(),
           imageFemale: (fieldImageFemale?.value || '').trim(),
           showMale: fieldShowMale?.checked !== false,
           showFemale: fieldShowFemale?.checked !== false,
+          inStock: fieldInStock?.checked !== false,
           description: fieldDesc.value.trim()
         };
+        if (fieldColors) fieldColors.value = colorsToInputValue(colorEntries);
         if (patch.id) {
           Store.updateProduct(patch.id, patch);
         } else {
@@ -510,6 +639,8 @@ Informe a senha:`);
         toggleSizeField();
         if (fieldShowMale) fieldShowMale.checked = true;
         if (fieldShowFemale) fieldShowFemale.checked = true;
+        if (fieldInStock) fieldInStock.checked = true;
+        renderColorRows([]);
         btnDelete.classList.add('hidden');
       });
       btnDelete?.addEventListener('click', () => {
@@ -523,6 +654,8 @@ Informe a senha:`);
           toggleSizeField();
           if (fieldShowMale) fieldShowMale.checked = true;
           if (fieldShowFemale) fieldShowFemale.checked = true;
+          if (fieldInStock) fieldInStock.checked = true;
+          renderColorRows([]);
           btnDelete.classList.add('hidden');
         }
       });

@@ -3,6 +3,7 @@
 // Script comum: badge do carrinho + modal de carrinho.
 
 const $ = (id) => document.getElementById(id);
+const escapeAttr = (val) => String(val ?? '').replace(/"/g, '&quot;');
 const cartBackdrop = $('cartBackdrop');
 const cartModal = $('cartModal');
 const cartItems = $('cartItems');
@@ -64,17 +65,17 @@ function renderCart() {
                data-fallback="${Store.placeholderImg(p.name || 'item')}"
                class="w-16 h-16 object-cover rounded border border-gray-800" />
           <div>
-            <div class="font-medium">${p.name} <span class="text-xs text-gray-400">&bull; Tamanho: ${l.size}</span></div>
+            <div class="font-medium">${p.name} <span class="text-xs text-gray-400">&bull; Tamanho: ${l.size}${l.color ? ` &bull; Cor: ${l.color}` : ''}</span></div>
             <div class="text-sm text-gray-400">${Store.fmtBRL(p.price)} &bull;  Qtd: 
-              <button class="icon-btn" data-dec data-id="${p.id}" data-size="${l.size}">-</button>
+              <button class="icon-btn" data-dec data-id="${p.id}" data-size="${l.size}" data-color="${escapeAttr(l.color || '')}">-</button>
               <span class="mx-2">${qty}</span>
-              <button class="icon-btn" data-inc data-id="${p.id}" data-size="${l.size}">+</button>
+              <button class="icon-btn" data-inc data-id="${p.id}" data-size="${l.size}" data-color="${escapeAttr(l.color || '')}">+</button>
             </div>
           </div>
         </div>
         <div class="text-right">
           <div class="font-semibold">${Store.fmtBRL(line)}</div>
-          <button class="btn-danger mt-1" data-remove data-id="${p.id}" data-size="${l.size}">Remover</button>
+          <button class="btn-danger mt-1" data-remove data-id="${p.id}" data-size="${l.size}" data-color="${escapeAttr(l.color || '')}">Remover</button>
         </div>
       </div>`;
   }).join('');
@@ -116,24 +117,27 @@ document.addEventListener('click', (e) => {
   if (rem) {
     const id = rem.getAttribute('data-id');
     const size = rem.getAttribute('data-size');
-    if (id && size) { Store.removeFromCart(id, size); renderCart(); updateCartBadge(); }
+    const color = rem.getAttribute('data-color') || null;
+    if (id && size) { Store.removeFromCart(id, size, color || null); renderCart(); updateCartBadge(); }
   } else if (inc) {
     const id = inc.getAttribute('data-id');
     const size = inc.getAttribute('data-size');
+    const color = inc.getAttribute('data-color') || null;
     if (id && size) {
       const lines = Store.getCart();
-      const line = lines.find(l => l.id === id && l.size === size);
+      const line = lines.find(l => l.id === id && l.size === size && ((l.color || null) === (color || null)));
       const next = (line?.qty || 0) + 1;
-      Store.setCartQty(id, size, next); renderCart(); updateCartBadge();
+      Store.setCartQty(id, size, color || null, next); renderCart(); updateCartBadge();
     }
   } else if (dec) {
     const id = dec.getAttribute('data-id');
     const size = dec.getAttribute('data-size');
+    const color = dec.getAttribute('data-color') || null;
     if (id && size) {
       const lines = Store.getCart();
-      const line = lines.find(l => l.id === id && l.size === size);
+      const line = lines.find(l => l.id === id && l.size === size && ((l.color || null) === (color || null)));
       const next = (line?.qty || 0) - 1;
-      Store.setCartQty(id, size, next); renderCart(); updateCartBadge();
+      Store.setCartQty(id, size, color || null, next); renderCart(); updateCartBadge();
     }
   }
 });
@@ -156,7 +160,8 @@ if (btnCheckout) btnCheckout.addEventListener('click', () => {
     const unitPrice = product ? product.price : 0;
     const lineTotal = unitPrice * qty;
     total += lineTotal;
-    return `- ${name} (Tamanho: ${line.size}) x${qty} - ${Store.fmtBRL(lineTotal)}`;
+    const colorInfo = line.color ? ` | Cor: ${line.color}` : '';
+    return `- ${name} (Tamanho: ${line.size}${colorInfo}) x${qty} - ${Store.fmtBRL(lineTotal)}`;
   }).join('\n');
 
   const messageLines = [
@@ -186,4 +191,3 @@ updateCartBadge();
 // Direct listeners as fallback
 $('btnCart')?.addEventListener('click', (e) => { e.preventDefault(); openCart(); });
 $('btnCartHero')?.addEventListener('click', (e) => { e.preventDefault(); openCart(); });
-

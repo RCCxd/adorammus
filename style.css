@@ -134,6 +134,90 @@ main { flex: 1 0 auto; }
 .card-price { color: var(--color-text); font-weight: 700; }
 .card-desc { color: var(--color-text-muted); font-size: 0.95rem; }
 
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1.25rem;
+  justify-items: center;
+  align-items: stretch;
+}
+@media (min-width: 768px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
+  }
+}
+.product-card {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+.product-card .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.9rem;
+}
+.product-card .card-title { font-size: 1.1rem; }
+.product-card .card-price { font-size: 1.15rem; }
+.product-card-media {
+  display: block;
+  width: 100%;
+  height: 260px;
+  border-bottom: 1px solid var(--color-line);
+  object-fit: cover;
+}
+@media (max-width: 640px) {
+  .product-card { max-width: none; }
+  .product-card-media { height: 220px; }
+  .product-card .card-body { padding: 0.85rem; }
+}
+
+.color-dot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-top: 0.45rem;
+  margin-top: 0.25rem;
+  border-top: 1px dashed rgba(233,223,201,0.35);
+}
+.color-dot {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  background: var(--dot-color, var(--color-primary));
+  border: 2px solid rgba(233,223,201,0.6);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.15) inset;
+}
+.color-option-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.color-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  background: rgba(0,0,0,0.05);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.color-option:hover {
+  border-color: rgba(233,223,201,0.6);
+}
+.color-option.active {
+  border-color: var(--color-primary);
+  background: rgba(199,167,108,0.25);
+}
+.color-option .color-dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-width: 1px;
+}
 /* Ações no card */
 .card-actions {
   display: flex;
@@ -382,3 +466,8 @@ body.page-index { overflow-x: hidden; overflow-y: auto; }
     font-size: 0.8rem !important;
   }
 }
+
+
+
+
+

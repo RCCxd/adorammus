@@ -39,6 +39,38 @@ const Store = (() => {
     if (typeof sizes === 'string') return sizes.split(',').map(s => s.trim()).filter(Boolean);
     return ['P','M','G'];
   }
+  const COLOR_ENTRY_SPLIT = /[,;\n]+/;
+  function normalizeColorEntry(entry) {
+    if (!entry) return null;
+    if (typeof entry === 'string') {
+      const raw = entry.trim();
+      if (!raw) return null;
+      const parts = raw.split(/[:|]/);
+      let name = (parts[0] || '').trim();
+      let swatch = (parts[1] || '').trim();
+      if (!name && swatch) {
+        name = swatch;
+        swatch = '';
+      }
+      return name ? { name, swatch: swatch || null } : null;
+    }
+    if (typeof entry === 'object') {
+      const name = (entry.name || entry.label || entry.title || '').trim();
+      const swatch = (entry.swatch || entry.hex || entry.color || '').trim();
+      if (!name && !swatch) return null;
+      return { name: name || swatch || 'Variante', swatch: swatch || null };
+    }
+    return null;
+  }
+  function normalizeColors(colors) {
+    if (!colors) return [];
+    if (Array.isArray(colors)) return colors.map(normalizeColorEntry).filter(Boolean);
+    if (typeof colors === 'string') {
+      return colors.split(COLOR_ENTRY_SPLIT).map(normalizeColorEntry).filter(Boolean);
+    }
+    if (typeof colors === 'object') return normalizeColors([colors]);
+    return [];
+  }
 
   function resolveImageUrl(src, seedName) {
     if (!src) return placeholderImg(seedName || 'item');
@@ -75,7 +107,9 @@ const Store = (() => {
       sizes,
       hasSizes,
       showMale,
-      showFemale
+      showFemale,
+      colors: normalizeColors(p.colors),
+      inStock: p.inStock === false ? false : true
     };
   }
 
@@ -88,7 +122,9 @@ const Store = (() => {
       image: placeholderImg('camiseta-preta'),
       imageMale: placeholderImg('camiseta-preta-m'),
       imageFemale: placeholderImg('camiseta-preta-f'),
-      description: 'Camiseta preta basica 100% algodao. Caimento confortavel.'
+      description: 'Camiseta preta basica 100% algodao. Caimento confortavel.',
+      colors: ['Preto:#111111', 'Branco:#e7e7e7'],
+      inStock: true
     }),
     sanitizeProduct({
       id: uid(),
@@ -98,7 +134,9 @@ const Store = (() => {
       image: placeholderImg('camiseta-branca'),
       imageMale: placeholderImg('camiseta-branca-m'),
       imageFemale: placeholderImg('camiseta-branca-f'),
-      description: 'Camiseta branca essencial, macia e leve para o dia a dia.'
+      description: 'Camiseta branca essencial, macia e leve para o dia a dia.',
+      colors: ['Branco:#f2f2f2', 'Azul:#2643ff'],
+      inStock: true
     })
   ];
 
@@ -161,39 +199,70 @@ const Store = (() => {
   }
 
   // Carrinho
+  function normalizeCartLine(line) {
+    if (!line || typeof line !== 'object') return null;
+    if (!line.id) return null;
+    const qty = Number(line.qty) || 0;
+    if (qty <= 0) return null;
+    const size = line.size || SINGLE_SIZE;
+    const color = typeof line.color === 'string' && line.color.trim() ? line.color.trim() : null;
+    return { id: line.id, size, color, qty };
+  }
   function migrateCart(raw) {
-    if (Array.isArray(raw)) return raw;
-    if (raw && typeof raw === 'object') {
+    let list = [];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (raw && typeof raw === 'object') {
       const prods = getProducts();
-      return Object.entries(raw).map(([id, qty]) => {
+      list = Object.entries(raw).map(([id, qty]) => {
         const p = prods.find(p => p.id === id);
         const size = p ? (p.sizes?.[0] || SINGLE_SIZE) : SINGLE_SIZE;
         return { id, size, qty };
       });
     }
-    return [];
+    return list.map(normalizeCartLine).filter(Boolean);
   }
   function getCart() { return migrateCart(readJSON(STORAGE_CART, [])); }
-  function saveCart(lines) { writeJSON(STORAGE_CART, lines); }
+  function saveCart(lines) { writeJSON(STORAGE_CART, lines.map(normalizeCartLine).filter(Boolean)); }
   function cartCount() { return getCart().reduce((a, b) => a + (b.qty || 0), 0); }
-  function addToCart(id, size = null, qty = 1) {
+  function addToCart(id, size = null, color = null, qty = 1) {
+    const amount = Number(qty) || 0;
+    if (!amount) return getCart();
     const lines = getCart();
-    const useSize = size || (getProduct(id)?.sizes?.[0] || SINGLE_SIZE);
-    const idx = lines.findIndex(l => l.id === id && l.size === useSize);
-    if (idx >= 0) lines[idx].qty += qty; else lines.push({ id, size: useSize, qty });
+    const product = getProduct(id);
+    const useSize = size || (product?.sizes?.[0] || SINGLE_SIZE);
+    const availableColors = product?.colors || [];
+    const chosenColor = (typeof color === 'string' && color.trim()) ? color.trim()
+      : (availableColors[0]?.name || null);
+    const idx = lines.findIndex(l =>
+      l.id === id &&
+      l.size === useSize &&
+      ((l.color || null) === (chosenColor || null))
+    );
+    if (idx >= 0) {
+      lines[idx].qty += amount;
+    } else {
+      lines.push({ id, size: useSize, color: chosenColor, qty: amount });
+    }
     saveCart(lines);
     return lines;
   }
-  function setCartQty(id, size, qty) {
+  function setCartQty(id, size, color, qty) {
     const lines = getCart();
-    const idx = lines.findIndex(l => l.id === id && l.size === size);
+    const idx = lines.findIndex(l =>
+      l.id === id &&
+      l.size === size &&
+      ((l.color || null) === (color || null))
+    );
     if (idx < 0) return lines;
     if (qty <= 0) { lines.splice(idx, 1); } else { lines[idx].qty = qty; }
     saveCart(lines);
     return lines;
   }
-  function removeFromCart(id, size) {
-    const lines = getCart().filter(l => !(l.id === id && l.size === size));
+  function removeFromCart(id, size, color) {
+    const lines = getCart().filter(l =>
+      !(l.id === id && l.size === size && ((l.color || null) === (color || null)))
+    );
     saveCart(lines);
     return lines;
   }

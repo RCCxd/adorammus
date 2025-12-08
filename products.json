@@ -1,5 +1,117 @@
 [
   {
+    "id": "ire4fy2l",
+    "name": "Pulseiras de Terço Hematita",
+    "price": 15.99,
+    "category": "Camisetas",
+    "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/hematita3.jpg?raw=true",
+    "imageAlt": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/hematita4.jpg?raw=true",
+    "imageMale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/hematita3.jpg?raw=true",
+    "imageFemale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/hematita3.jpg?raw=true",
+    "description": "O Terço Mariano é um presente de Nossa Senhora a Santa Igreja, uma oração muito importante na fé Católica, esse produto traz esse objeto em forma de pulseira, te ajudando a vestir a sua fé!",
+    "sizes": [
+      "Unico"
+    ],
+    "hasSizes": false,
+    "showMale": false,
+    "showFemale": false,
+    "colors": [
+      {
+        "name": "Azul",
+        "swatch": "#0e0983"
+      },
+      {
+        "name": "Dourado",
+        "swatch": "#8c7f45"
+      },
+      {
+        "name": "Preto",
+        "swatch": "#060f17"
+      },
+      {
+        "name": "Vinho",
+        "swatch": "#47232c"
+      }
+    ],
+    "inStock": true
+  },
+  {
+    "id": "7lk6w5ji",
+    "name": "Imagem São João Paulo II",
+    "price": 10,
+    "category": "Camisetas",
+    "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/joaopaulo.jpg?raw=true",
+    "imageAlt": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/joaopaulo.jpg?raw=true",
+    "imageMale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/joaopaulo.jpg?raw=true",
+    "imageFemale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/joaopaulo.jpg?raw=true",
+    "description": "São João Paulo II é um símbolo de fé e perseverança, e tem diversas frases que inspiram a juventude a santidade.\nA Adorammus traz esse produto para te inspirar na fé!",
+    "sizes": [
+      "Unico"
+    ],
+    "hasSizes": false,
+    "showMale": false,
+    "showFemale": false,
+    "colors": [],
+    "inStock": true
+  },
+  {
+    "id": "ow1nhpv0",
+    "name": "Terço de São Bento",
+    "price": 15,
+    "category": "Camisetas",
+    "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/mariano.jpg?raw=true",
+    "imageAlt": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/mariano.jpg?raw=true",
+    "imageMale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/mariano.jpg?raw=true",
+    "imageFemale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/mariano.jpg?raw=true",
+    "description": "O Terço Mariano é um presente de Nossa Senhora a Santa Igreja, uma oração muito importante na fé Católica, a Adorammus traz esse produto te ajudando a edificar a sua fé",
+    "sizes": [
+      "Unico"
+    ],
+    "hasSizes": false,
+    "showMale": false,
+    "showFemale": false,
+    "colors": [],
+    "inStock": true
+  },
+  {
+    "id": "m5lip89c",
+    "name": "Escapulario Prateado",
+    "price": 25,
+    "category": "Camisetas",
+    "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/nossasenhora.jpg?raw=true",
+    "imageAlt": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/nossasenhora.jpg?raw=true",
+    "imageMale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/nossasenhora.jpg?raw=true",
+    "imageFemale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/nossasenhora.jpg?raw=true",
+    "description": "O escapulario é um importante objeto da fé Católica, é muito ligado a Nossa Senhora do Carmo, pois ela apareceu a um homem e entregou o escapulario.\nA Adorammus traz esse objeto em prata, fazendo você festir sua fé com estilo.",
+    "sizes": [
+      "Unico"
+    ],
+    "hasSizes": false,
+    "showMale": false,
+    "showFemale": false,
+    "colors": [],
+    "inStock": true
+  },
+  {
+    "id": "pxx6dark",
+    "name": "Escapulario Folheado a Ouro",
+    "price": 35,
+    "category": "Camisetas",
+    "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/escapulario.jpg?raw=true",
+    "imageAlt": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/escapulario.jpg?raw=true",
+    "imageMale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/escapulario.jpg?raw=true",
+    "imageFemale": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/escapulario.jpg?raw=true",
+    "description": "O escapulario é um importante objeto da fé Católica, é muito ligado a Nossa Senhora do Carmo, pois ela apareceu a um homem e entregou o escapulario.\nA Adorammus traz esse objeto folhado a ouro, fazendo você festir sua fé com estilo.",
+    "sizes": [
+      "Unico"
+    ],
+    "hasSizes": false,
+    "showMale": false,
+    "showFemale": false,
+    "colors": [],
+    "inStock": true
+  },
+  {
     "id": "oms2bk2z",
     "name": "Medalha de São Bento",
     "price": 7,
@@ -14,7 +126,9 @@
     ],
     "hasSizes": false,
     "showMale": false,
-    "showFemale": false
+    "showFemale": false,
+    "colors": [],
+    "inStock": true
   },
   {
     "id": "cu6efdnl",
@@ -33,6 +147,8 @@
     ],
     "hasSizes": true,
     "showMale": false,
-    "showFemale": false
+    "showFemale": false,
+    "colors": [],
+    "inStock": false
   }
 ]

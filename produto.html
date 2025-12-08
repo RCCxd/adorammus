@@ -58,9 +58,16 @@
         return usp.get('id');
       }
       let selSize = null;
+      let selColor = null;
       let selGender = Store.getGender();
       const FLIP_INTERVAL = 5000;
       let flipTimer = null;
+      const htmlEscape = (str = '') => String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      const safeColorValue = (val) => String(val ?? '').replace(/["<>]/g, '').replace(/;/g, '');
 
       function flipProductImages() {
         document.querySelectorAll('img[data-img-primary][data-img-secondary]').forEach((img) => {
@@ -108,6 +115,9 @@
         const safeSecondary = secondaryImg || safePrimary;
         const sizes = p.hasSizes === false ? ['Unico'] : ((p.sizes && p.sizes.length) ? p.sizes : ['P','M','G']);
         if (!selSize || p.hasSizes === false) selSize = sizes[0];
+        const colorList = Array.isArray(p.colors) ? p.colors : [];
+        if (!colorList.length) selColor = null;
+        else if (!colorList.some(col => col?.name === selColor)) selColor = colorList[0]?.name || null;
         const modelBlock = hasGenderOptions ? `
             <div>
               <div class="label">Modelo</div>
@@ -117,11 +127,29 @@
                 `).join('')}
               </div>
             </div>` : '';
+        const colorsBlock = colorList.length ? `
+            <div>
+              <div class="label">Cores</div>
+              <div class="color-option-list">
+                ${colorList.map(col => {
+                  const safeName = htmlEscape(col?.name || 'Cor');
+                  const swatch = safeColorValue(col?.swatch || '');
+                  const style = swatch ? ` style="--dot-color:${swatch}"` : '';
+                  const active = selColor === col?.name ? ' active' : '';
+                  return `<button class="color-option${active}" data-color-choice="${safeName}">
+                    <span class="color-dot"${style}></span>
+                    <span>${safeName}</span>
+                  </button>`;
+                }).join('')}
+              </div>
+            </div>` : '';
         const sizesBlock = p.hasSizes === false
           ? '<div class="text-sm text-gray-400">Tamanho unico</div>'
           : `<div class="flex flex-wrap gap-2">${sizes.map(s => `
                   <button class="icon-btn ${selSize===s ? 'bg-indigo-600 border-transparent text-white' : ''}" data-size-choice="${s}">${s}</button>
                 `).join('')}</div>`;
+        const outOfStock = p.inStock === false;
+        const stockNotice = outOfStock ? '<div class="alert-out">Este produto est&aacute; indispon&iacute;vel no momento.</div>' : '';
         wrap.innerHTML = `
           <div class="anim-fade">
             <img src="${safePrimary}" alt="${p.name}"
@@ -135,15 +163,18 @@
             <div class="flex items-start justify-between gap-4">
               <h2 class="text-2xl md:text-3xl font-bold">${p.name}</h2>
             </div>
-            <div class="text-xl font-semibold">${Store.fmtBRL(p.price)}</div>
+            <div class="text-xl font-semibold ${outOfStock ? 'line-through opacity-70' : ''}">${Store.fmtBRL(p.price)}</div>
+            ${outOfStock ? '<div class="text-sm text-rose-300 font-semibold">Fora de estoque</div>' : ''}
             ${p.description ? `<p class="text-gray-300">${p.description}</p>` : ''}
             ${modelBlock}
+            ${colorsBlock}
             <div>
               <div class="label">Tamanhos</div>
               ${sizesBlock}
             </div>
+            ${stockNotice}
             <div class="flex items-center gap-3">
-              <button class="btn-primary" data-add="${p.id}">Adicionar ao carrinho</button>
+              <button class="btn-primary" data-add="${p.id}" ${outOfStock ? 'disabled' : ''}>${outOfStock ? 'Indisponivel' : 'Adicionar ao carrinho'}</button>
               <a href="produtos.html" class="btn-secondary">Voltar</a>
             </div>
           </div>`;
@@ -155,6 +186,7 @@
         const add = t.closest('[data-add]');
         const sizeBtn = t.closest('[data-size-choice]');
         const genderBtn = t.closest('[data-gender-choice]');
+        const colorBtn = t.closest('[data-color-choice]');
         if (sizeBtn) {
           selSize = sizeBtn.getAttribute('data-size-choice');
           render();
@@ -162,9 +194,12 @@
           selGender = genderBtn.getAttribute('data-gender-choice') === 'feminino' ? 'feminino' : 'masculino';
           Store.setGender(selGender);
           render();
+        } else if (colorBtn) {
+          selColor = colorBtn.getAttribute('data-color-choice');
+          render();
         } else if (add) {
           const id = add.getAttribute('data-add');
-          Store.addToCart(id, selSize || null, 1);
+          Store.addToCart(id, selSize || null, selColor || null, 1);
           updateCartBadge && updateCartBadge();
         }
       });
@@ -206,8 +241,6 @@
     </footer>
   </body>
 </html>
-
-
 
 
 
