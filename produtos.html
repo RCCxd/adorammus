@@ -107,7 +107,7 @@
                 <button type="button" class="btn-danger text-sm px-3" data-remove-color>&times;</button>
               </div>
             </div>
-            <p class="text-xs text-gray-400 mt-1">Informe nome e opcionalmente o hex (ex.: Preto / #000000). Deixe vazio para remover.</p>
+            <p class="text-xs text-gray-400 mt-1">Informe o nome, o hex opcional (ex.: Preto / #000000) e, se quiser, uma URL de imagem especifica. Deixe todos em branco para remover.</p>
             <input id="fieldColors" type="hidden" />
           </div>
           <div>
@@ -239,8 +239,11 @@
         return Array.from(colorList.querySelectorAll('[data-color-row]')).map((row) => {
           const name = row.querySelector('[data-color-name]')?.value.trim() || '';
           const swatch = row.querySelector('[data-color-swatch]')?.value.trim() || '';
-          if (!name && !swatch) return null;
-          return { name: name || swatch || 'Variante', swatch: swatch || null };
+          const image = row.querySelector('[data-color-image]')?.value.trim() || '';
+          if (!name && !swatch && !image) return null;
+          const payload = { name: name || swatch || 'Variante', swatch: swatch || null };
+          if (image) payload.image = image;
+          return payload;
         }).filter(Boolean);
       }
       function syncColorField() {
@@ -249,11 +252,12 @@
       function addColorRow(data = {}) {
         if (!colorList) return;
         const row = document.createElement('div');
-        row.className = 'flex items-center gap-2';
+        row.className = 'flex flex-wrap items-center gap-2';
         row.setAttribute('data-color-row', '1');
         row.innerHTML = `
-          <input type="text" class="input flex-1" placeholder="Nome" value="${data.name || ''}" data-color-name />
+          <input type="text" class="input flex-1 min-w-[140px]" placeholder="Nome" value="${data.name || ''}" data-color-name />
           <input type="text" class="input w-28" placeholder="#hex" value="${data.swatch || ''}" data-color-swatch />
+          <input type="url" class="input flex-1 min-w-[200px]" placeholder="URL da imagem (opcional)" value="${data.image || ''}" data-color-image />
           <button type="button" class="btn-danger text-sm px-3" data-remove-color>&times;</button>
         `;
         colorList.appendChild(row);
@@ -731,6 +735,28 @@ Informe a senha:`);
       <div class="max-w-7xl mx-auto px-4 py-8 text-sm flex items-center justify-between">
         <div class="text-gray-600">&copy; 2025 adorammus</div>
         <div class="text-gray-600">Feito com carinho</div>
+      </div>
+      <div class="max-w-7xl mx-auto px-4 pb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
+        <div class="text-gray-500">Developed by</div>
+        <a
+          href="https://www.instagram.com/renan_cavalcantic"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-500/50 bg-indigo-500/10 text-indigo-100 hover:bg-indigo-500/20 hover:border-indigo-400 transition-colors duration-150"
+        >
+          <svg
+            class="w-5 h-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="5" ry="5" stroke="currentColor" stroke-width="1.6" />
+            <circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.6" />
+            <circle cx="17" cy="7" r="1.2" fill="currentColor" />
+          </svg>
+          <span class="font-medium">@renan_cavalcantic</span>
+        </a>
       </div>
     </footer>
   </body>

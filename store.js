@@ -40,7 +40,7 @@ const Store = (() => {
     return ['P','M','G'];
   }
   const COLOR_ENTRY_SPLIT = /[,;\n]+/;
-  function normalizeColorEntry(entry) {
+  function normalizeColorEntry(entry, seedName) {
     if (!entry) return null;
     if (typeof entry === 'string') {
       const raw = entry.trim();
@@ -52,23 +52,26 @@ const Store = (() => {
         name = swatch;
         swatch = '';
       }
-      return name ? { name, swatch: swatch || null } : null;
+      return name ? { name, swatch: swatch || null, image: null } : null;
     }
     if (typeof entry === 'object') {
       const name = (entry.name || entry.label || entry.title || '').trim();
       const swatch = (entry.swatch || entry.hex || entry.color || '').trim();
-      if (!name && !swatch) return null;
-      return { name: name || swatch || 'Variante', swatch: swatch || null };
+      const imgSrc = (entry.image || entry.photo || entry.img || entry.url || '').trim();
+      const imgSeed = seedName ? `${seedName}-${name || 'variante'}` : (name || 'variante');
+      const image = imgSrc ? resolveImageUrl(imgSrc, imgSeed) : null;
+      if (!name && !swatch && !image) return null;
+      return { name: name || swatch || 'Variante', swatch: swatch || null, image };
     }
     return null;
   }
-  function normalizeColors(colors) {
+  function normalizeColors(colors, seedName) {
     if (!colors) return [];
-    if (Array.isArray(colors)) return colors.map(normalizeColorEntry).filter(Boolean);
+    if (Array.isArray(colors)) return colors.map((entry) => normalizeColorEntry(entry, seedName)).filter(Boolean);
     if (typeof colors === 'string') {
-      return colors.split(COLOR_ENTRY_SPLIT).map(normalizeColorEntry).filter(Boolean);
+      return colors.split(COLOR_ENTRY_SPLIT).map((entry) => normalizeColorEntry(entry, seedName)).filter(Boolean);
     }
-    if (typeof colors === 'object') return normalizeColors([colors]);
+    if (typeof colors === 'object') return normalizeColors([colors], seedName);
     return [];
   }
 
@@ -108,9 +111,16 @@ const Store = (() => {
       hasSizes,
       showMale,
       showFemale,
-      colors: normalizeColors(p.colors),
+      colors: normalizeColors(p.colors, name || id),
       inStock: p.inStock === false ? false : true
     };
+  }
+
+  function findColorEntry(prod, colorName) {
+    if (!prod || !colorName) return null;
+    const list = Array.isArray(prod.colors) ? prod.colors : [];
+    const target = String(colorName).trim().toLowerCase();
+    return list.find((col) => (col?.name || '').trim().toLowerCase() === target) || null;
   }
 
   const defaultProducts = [
@@ -303,6 +313,11 @@ const Store = (() => {
     return [primary, secondary];
   }
 
+  function getColorImage(prod, colorName) {
+    const entry = findColorEntry(prod, colorName);
+    return entry?.image || null;
+  }
+
   // Carrega lista remota (GitHub Pages) e salva localmente
   async function initFromRemote(customUrl) {
     const buster = `v=${Math.floor(Date.now()/60000)}`; // muda a cada minuto
@@ -340,6 +355,7 @@ const Store = (() => {
     getCart, cartCount, addToCart, setCartQty, removeFromCart, clearCart, cartTotal,
     // preferencias
     getGender, setGender, getImageByGender, getBaseImages, pickGender,
+    getColorImage,
     // remoto
     initFromRemote,
   };

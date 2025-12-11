@@ -18,19 +18,23 @@
     "colors": [
       {
         "name": "Azul",
-        "swatch": "#0e0983"
+        "swatch": "#0e0983",
+        "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/hematita3.jpg?raw=true"
       },
       {
         "name": "Dourado",
-        "swatch": "#8c7f45"
+        "swatch": "#8c7f45",
+        "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/hematita4.jpg?raw=true"
       },
       {
         "name": "Preto",
-        "swatch": "#060f17"
+        "swatch": "#060f17",
+        "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/hematita5.jpg?raw=true"
       },
       {
         "name": "Vinho",
-        "swatch": "#47232c"
+        "swatch": "#47232c",
+        "image": "https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/hematita2.jpg?raw=true"
       }
     ],
     "inStock": true
