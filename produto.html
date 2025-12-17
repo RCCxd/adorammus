@@ -18,17 +18,44 @@
           </a>
           <h1 class="text-lg sm:text-xl font-semibold">Detalhe do Produto</h1>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap justify-end">
+          <div class="session-pill">
+            <span class="session-pill-label">Olá,</span>
+            <span data-session-name>Visitante</span>
+          </div>
+          <a href="login.html" class="btn-secondary">Contas</a>
           <button id="btnCart" class="btn-secondary"><svg class="cart-ico" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 4h2l2.4 12.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></svg><span data-cart-label>Carrinho</span> (<span data-cart-count>0</span>)</button>
         </div>
       </div>
     </header>
 
-    <main class="page-section max-w-6xl mx-auto px-4 py-10 elevated">
+    <main class="page-section max-w-6xl mx-auto px-4 py-10 elevated space-y-10">
       <div id="productDetail" class="grid grid-cols-1 md:grid-cols-2 gap-10 items-start"></div>
       <p id="notFound" class="hidden text-center text-gray-400 py-16">Produto não encontrado.</p>
-    </main>
 
+      <section id="productReviews" class="space-y-4">
+        <div class="card elevated p-5 space-y-4">
+          <div>
+            <p class="text-sm uppercase tracking-widest text-gray-400">Depoimentos</p>
+            <h2 class="text-2xl font-semibold mt-1">Compartilhe sua experiência</h2>
+          </div>
+          <form id="reviewForm" class="space-y-3">
+            <label class="filter-field">
+              <span>Seu nome</span>
+              <input class="input" id="reviewName" type="text" placeholder="Maria Silva" required />
+            </label>
+            <label class="filter-field">
+              <span>Mensagem</span>
+              <textarea class="input min-h-[120px]" id="reviewMessage" placeholder="Conte como foi usar este produto" required></textarea>
+            </label>
+            <button class="btn-primary w-full" type="submit">Enviar depoimento</button>
+          </form>
+          <p id="reviewHint" class="review-hint text-sm text-gray-400"></p>
+          <div id="reviewList" class="review-list"></div>
+          <p id="reviewEmpty" class="text-sm text-gray-500">Nenhum depoimento para este item ainda.</p>
+        </div>
+      </section>
+    </main>
     <!-- Cart Modal -->
     <div id="cartBackdrop" class="modal-backdrop hidden"></div>
     <div id="cartModal" class="modal hidden">
@@ -53,6 +80,21 @@
     <script>
       const wrap = document.getElementById('productDetail');
       const notFound = document.getElementById('notFound');
+      const reviewForm = document.getElementById('reviewForm');
+      const reviewName = document.getElementById('reviewName');
+      const reviewMessage = document.getElementById('reviewMessage');
+      const reviewList = document.getElementById('reviewList');
+      const reviewEmpty = document.getElementById('reviewEmpty');
+      const reviewHint = document.getElementById('reviewHint');
+      const REVIEW_STORAGE_KEY = 'lk_reviews';
+      const REVIEW_REMOTE_URL = 'https://jsonblob.com/api/jsonBlob/019b2a11-2420-793c-b42d-4006b219fad4';
+      const AUTH_USERS_KEY = 'lk_auth_users';
+      const AUTH_SESSION_KEY = 'lk_auth_session';
+      let currentProductId = null;
+      let reviewCache = readReviewStore();
+      let reviewSyncPromise = null;
+      let reviewHintTimer = null;
+
       function getId() {
         const usp = new URLSearchParams(window.location.search);
         return usp.get('id');
@@ -68,6 +110,153 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
       const safeColorValue = (val) => String(val ?? '').replace(/["<>]/g, '').replace(/;/g, '');
+      function readReviewStore() {
+        try {
+          const raw = localStorage.getItem(REVIEW_STORAGE_KEY);
+          const data = raw ? JSON.parse(raw) : {};
+          return typeof data === 'object' && data ? data : {};
+        } catch {
+          return {};
+        }
+      }
+      function writeReviewStore(data) {
+        localStorage.setItem(REVIEW_STORAGE_KEY, JSON.stringify(data));
+      }
+      function getCachedReviewStore() {
+        if (!reviewCache || typeof reviewCache !== 'object') {
+          reviewCache = readReviewStore();
+        }
+        return reviewCache;
+      }
+      function setReviewCache(store) {
+        reviewCache = store && typeof store === 'object' ? store : {};
+        writeReviewStore(reviewCache);
+        return reviewCache;
+      }
+      function getReviews(productId) {
+        const store = getCachedReviewStore();
+        return Array.isArray(store?.[productId]) ? store[productId] : [];
+      }
+      async function fetchRemoteReviews() {
+        const res = await fetch(REVIEW_REMOTE_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Falha ao buscar depoimentos remotos');
+        const json = await res.json();
+        return json && typeof json === 'object' ? json : {};
+      }
+      async function syncReviewsFromRemote() {
+        if (reviewSyncPromise) return reviewSyncPromise;
+        reviewSyncPromise = (async () => {
+          try {
+            const remoteStore = await fetchRemoteReviews();
+            return setReviewCache(remoteStore);
+          } catch (err) {
+            console.warn('Falha ao sincronizar depoimentos remotos', err);
+            return getCachedReviewStore();
+          } finally {
+            reviewSyncPromise = null;
+          }
+        })();
+        return reviewSyncPromise;
+      }
+      async function pushReviewsRemote(payload) {
+        const res = await fetch(REVIEW_REMOTE_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload || {}),
+        });
+        if (!res.ok) throw new Error('Falha ao salvar depoimentos no repositório público');
+      }
+      async function addReviewEntry(productId, entry) {
+        await syncReviewsFromRemote().catch(() => getCachedReviewStore());
+        const store = getCachedReviewStore();
+        if (!Array.isArray(store[productId])) store[productId] = [];
+        store[productId].unshift(entry);
+        setReviewCache(store);
+        renderReviews(productId);
+        try {
+          await pushReviewsRemote(store);
+          return true;
+        } catch (err) {
+          console.warn('Não foi possível publicar o depoimento remotamente', err);
+          return false;
+        }
+      }
+      function getActiveUserSession() {
+        if (window.Auth?.getActiveUser) {
+          return window.Auth.getActiveUser();
+        }
+        try {
+          const sessionEmail = localStorage.getItem(AUTH_SESSION_KEY);
+          if (!sessionEmail) return null;
+          const list = JSON.parse(localStorage.getItem(AUTH_USERS_KEY) || '[]');
+          const user = Array.isArray(list) ? list.find((item) => (item.email || '').toLowerCase() === sessionEmail.toLowerCase()) : null;
+          if (user) return { ...user, email: sessionEmail };
+          return { name: 'Cliente', email: sessionEmail };
+        } catch {
+          return null;
+        }
+      }
+
+      function setReviewHintDefault(message) {
+        if (!reviewHint) return;
+        reviewHint.dataset.defaultHint = message;
+        reviewHint.textContent = message;
+      }
+      function temporarilyShowReviewHint(message, ttl = 4000) {
+        if (!reviewHint) return;
+        reviewHint.textContent = message;
+        if (reviewHintTimer) clearTimeout(reviewHintTimer);
+        reviewHintTimer = setTimeout(() => {
+          const base = reviewHint?.dataset?.defaultHint;
+          if (base) reviewHint.textContent = base;
+        }, ttl);
+      }
+
+      function hydrateReviewFormState() {
+        if (!reviewForm || !reviewName || !reviewMessage || !reviewHint) return;
+        const active = getActiveUserSession();
+        if (active) {
+          reviewForm.classList.remove('review-form-locked');
+          reviewName.value = active.name || active.email || 'Cliente';
+          reviewName.readOnly = true;
+          reviewMessage.disabled = false;
+          setReviewHintDefault(`Você está comentando como ${active.name || active.email}.`);
+        } else {
+          reviewForm.classList.add('review-form-locked');
+          reviewName.value = '';
+          reviewName.readOnly = false;
+          reviewMessage.value = '';
+          reviewMessage.disabled = true;
+          reviewHint.removeAttribute('data-default-hint');
+          reviewHint.innerHTML = 'Faça login na <a href="login.html" class="underline">aba Contas</a> para publicar seu depoimento.';
+        }
+      }
+
+      function renderReviews(productId) {
+        if (!reviewList || !reviewEmpty) return;
+        const list = getReviews(productId);
+        if (!list.length) {
+          reviewList.innerHTML = '';
+          reviewEmpty.classList.remove('hidden');
+          return;
+        }
+        reviewEmpty.classList.add('hidden');
+        reviewList.innerHTML = list.map((entry) => {
+          const name = htmlEscape(entry.name || 'Cliente');
+          const message = htmlEscape(entry.message || '');
+          const created = entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('pt-BR') : '';
+          const metaParts = [];
+          if (created) metaParts.push(created);
+          if (entry.email) metaParts.push(entry.email);
+          const meta = metaParts.join(' • ');
+          return `
+            <article class="review-item">
+              <strong>${name}</strong>
+              <p class="text-sm text-gray-300 mt-1">${message}</p>
+              <div class="review-meta">${meta}</div>
+            </article>`;
+        }).join('');
+      }
 
       function flipProductImages() {
         document.querySelectorAll('img[data-img-primary][data-img-secondary]').forEach((img) => {
@@ -100,6 +289,7 @@
           notFound.classList.remove('hidden');
           return;
         }
+        currentProductId = id;
         const options = genderOptions(p);
         const hasGenderOptions = options.length > 0;
         if (hasGenderOptions) {
@@ -181,6 +371,8 @@
             </div>
           </div>`;
         ensureFlipLoop();
+        renderReviews(id);
+        hydrateReviewFormState();
       }
       document.addEventListener('click', (e) => {
         const t = e.target;
@@ -232,9 +424,51 @@
         await (window.Store?.initFromRemote?.() || Promise.resolve(false));
         render();
         ensureFlipLoop();
+        syncReviewsFromRemote().then(() => {
+          if (currentProductId) renderReviews(currentProductId);
+        });
+      });
+
+      reviewForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentProductId) return;
+        const active = getActiveUserSession();
+        if (!active) {
+          alert('Faça login para enviar seu depoimento.');
+          return;
+        }
+        const message = (reviewMessage?.value || '').trim();
+        if (!message) return;
+        const entry = {
+          id: (crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+          name: active.name || active.email || 'Cliente',
+          email: active.email || '',
+          message,
+          createdAt: new Date().toISOString()
+        };
+        const submitBtn = reviewForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          temporarilyShowReviewHint('Publicando seu depoimento...');
+          const remoteOk = await addReviewEntry(currentProductId, entry);
+          reviewForm.reset();
+          hydrateReviewFormState();
+          temporarilyShowReviewHint(remoteOk ? 'Seu depoimento já está visível para todos!' : 'Depoimento salvo localmente. Tentaremos sincronizar novamente em breve.');
+        } catch (err) {
+          console.error('Erro ao salvar depoimento', err);
+          temporarilyShowReviewHint('Não foi possível salvar agora. Tente novamente em instantes.', 5000);
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+        }
       });
     </script>
     <script src="script.js"></script>
+    <a href="https://wa.me/558393023960" target="_blank" rel="noopener noreferrer" class="whatsapp-fab" aria-label="Conversar no WhatsApp">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 3C9.373 3 4 8.373 4 15c0 2.507.741 4.831 2.016 6.789L4 29l7.42-1.959C12.92 27.646 14.415 28 16 28c6.627 0 12-5.373 12-12S22.627 3 16 3Z" stroke="currentColor" stroke-width="2" />
+        <path d="M20.667 18.889c-.196-.098-1.159-.571-1.338-.636-.179-.065-.308-.098-.437.098-.13.196-.502.636-.615.767-.112.131-.224.147-.42.049-.196-.098-.827-.303-1.576-.966-.583-.52-.975-1.163-1.088-1.359-.112-.196-.012-.302.084-.399.086-.086.196-.224.293-.336.098-.112.13-.196.196-.327.065-.131.033-.245-.017-.343-.049-.098-.437-1.046-.599-1.433-.158-.379-.319-.327-.437-.333l-.373-.006c-.13 0-.34.049-.518.245-.179.196-.679.663-.679 1.618 0 .954.695 1.875.792 2.005.098.131 1.367 2.081 3.315 2.918.463.2.823.319 1.103.408.463.147.885.127 1.219.077.372-.055 1.159-.474 1.324-.932.164-.458.164-.85.115-.933-.049-.082-.179-.131-.375-.229Z" fill="currentColor" />
+      </svg>
+    </a>
       <footer class="footer-band">
       <div class="max-w-7xl mx-auto px-4 py-8 text-sm flex items-center justify-between">
         <div class="text-gray-600">&copy; 2025 adorammus</div>
@@ -286,4 +520,3 @@
     </footer>
   </body>
 </html>
-

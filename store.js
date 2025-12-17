@@ -5,6 +5,7 @@ const Store = (() => {
   const STORAGE_PRODUCTS = 'lk_products';
   const STORAGE_CART = 'lk_cart';
   const STORAGE_GENDER = 'lk_gender';
+  const STORAGE_SAVED = 'lk_saved';
   const SINGLE_SIZE = 'Unico';
 
   // Util
@@ -285,6 +286,64 @@ const Store = (() => {
       return sum + (p ? p.price * (l.qty || 0) : 0);
     }, 0);
   }
+  // Favoritos / salvos
+  function normalizeSaved(line) {
+    if (!line || typeof line !== 'object') return null;
+    if (!line.id) return null;
+    const qty = Number(line.qty) || 1;
+    const size = line.size || SINGLE_SIZE;
+    const color = typeof line.color === 'string' && line.color.trim() ? line.color.trim() : null;
+    return { id: line.id, size, color, qty: qty > 0 ? qty : 1 };
+  }
+  function getSavedItems() {
+    return readJSON(STORAGE_SAVED, []).map(normalizeSaved).filter(Boolean);
+  }
+  function saveSaved(list) {
+    writeJSON(STORAGE_SAVED, list.map(normalizeSaved).filter(Boolean));
+  }
+  function addToSaved(id, size = null, color = null, qty = 1) {
+    if (!id) return getSavedItems();
+    const items = getSavedItems();
+    const product = getProduct(id);
+    const useSize = size || (product?.sizes?.[0] || SINGLE_SIZE);
+    const availableColors = product?.colors || [];
+    const chosenColor = (typeof color === 'string' && color.trim())
+      ? color.trim()
+      : (availableColors[0]?.name || null);
+    const idx = items.findIndex(item =>
+      item.id === id &&
+      item.size === useSize &&
+      ((item.color || null) === (chosenColor || null))
+    );
+    if (idx >= 0) {
+      items[idx].qty = (items[idx].qty || 1) + (Number(qty) || 1);
+    } else {
+      items.push({ id, size: useSize, color: chosenColor || null, qty: Number(qty) > 0 ? Number(qty) : 1 });
+    }
+    saveSaved(items);
+    return items;
+  }
+  function removeSavedItem(id, size, color) {
+    const rest = getSavedItems().filter(item =>
+      !(item.id === id && item.size === size && ((item.color || null) === (color || null)))
+    );
+    saveSaved(rest);
+    return rest;
+  }
+  function clearSaved() { saveSaved([]); }
+  function moveSavedToCart(id, size, color) {
+    const current = getSavedItems();
+    const target = current.find(item =>
+      item.id === id &&
+      item.size === size &&
+      ((item.color || null) === (color || null))
+    );
+    if (target) {
+      addToCart(target.id, target.size, target.color, target.qty || 1);
+      removeSavedItem(target.id, target.size, target.color);
+    }
+    return getCart();
+  }
 
   // Preferencias de exibicao (genero)
   function getGender() {
@@ -353,6 +412,8 @@ const Store = (() => {
     getProducts, getProduct, setProducts, addProduct, updateProduct, removeProduct, resetProductsToDefaults,
     // carrinho
     getCart, cartCount, addToCart, setCartQty, removeFromCart, clearCart, cartTotal,
+    // salvos
+    getSavedItems, addToSaved, removeSavedItem, clearSaved, moveSavedToCart,
     // preferencias
     getGender, setGender, getImageByGender, getBaseImages, pickGender,
     getColorImage,

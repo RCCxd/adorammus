@@ -16,7 +16,12 @@
           <img src="https://github.com/RCCxd/loja-dudu-e-kevin/blob/main/Logo%20Adorammus.png?raw=true" alt="Adorammus" class="h-9 w-9 rounded-md border border-gray-800 object-cover" />
           <h1 class="text-lg sm:text-xl font-semibold">Adorammus</h1>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 flex-wrap justify-end">
+          <div class="session-pill">
+            <span class="session-pill-label">Olá,</span>
+            <span data-session-name>Visitante</span>
+          </div>
+          <a href="login.html" class="btn-secondary">Contas</a>
           <a href="produtos.html" class="btn-primary">Compre aqui</a>
           <button id="btnCart" class="btn-secondary"><svg class="cart-ico" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 4h2l2.4 12.1a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L21 8H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></svg><span data-cart-label>Carrinho</span> (<span data-cart-count>0</span>)</button>
         </div>
@@ -44,6 +49,8 @@
           </div>
         </div>
       </section>
+
+      <!-- seção dedicada removida a pedido do cliente -->
     </main>
 
     <!-- Cart Modal -->
@@ -68,7 +75,13 @@
 
     <script src="store.js"></script>
     <script src="script.js"></script>
-      <footer class="footer-band">
+    <a href="https://wa.me/558393023960" target="_blank" rel="noopener noreferrer" class="whatsapp-fab" aria-label="Conversar no WhatsApp">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 3C9.373 3 4 8.373 4 15c0 2.507.741 4.831 2.016 6.789L4 29l7.42-1.959C12.92 27.646 14.415 28 16 28c6.627 0 12-5.373 12-12S22.627 3 16 3Z" stroke="currentColor" stroke-width="2" />
+        <path d="M20.667 18.889c-.196-.098-1.159-.571-1.338-.636-.179-.065-.308-.098-.437.098-.13.196-.502.636-.615.767-.112.131-.224.147-.42.049-.196-.098-.827-.303-1.576-.966-.583-.52-.975-1.163-1.088-1.359-.112-.196-.012-.302.084-.399.086-.086.196-.224.293-.336.098-.112.13-.196.196-.327.065-.131.033-.245-.017-.343-.049-.098-.437-1.046-.599-1.433-.158-.379-.319-.327-.437-.333l-.373-.006c-.13 0-.34.049-.518.245-.179.196-.679.663-.679 1.618 0 .954.695 1.875.792 2.005.098.131 1.367 2.081 3.315 2.918.463.2.823.319 1.103.408.463.147.885.127 1.219.077.372-.055 1.159-.474 1.324-.932.164-.458.164-.85.115-.933-.049-.082-.179-.131-.375-.229Z" fill="currentColor" />
+      </svg>
+    </a>
+    <footer class="footer-band">
       <div class="max-w-7xl mx-auto px-4 py-8 text-sm flex items-center justify-between">
         <div class="text-gray-600">&copy; 2025 adorammus</div>
         <div class="text-gray-600">Feito com carinho</div>
